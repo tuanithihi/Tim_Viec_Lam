@@ -26,3 +26,31 @@
 - **Rủi ro / việc để giai đoạn sau**:
   - Chưa có bảng cơ sở dữ liệu Entity Framework Core (sẽ tạo các tblXxx từ Giai đoạn 1).
   - Chưa tích hợp xác thực / ủy quyền Cookie Authentication (sẽ triển khai ở Giai đoạn 1).
+
+## GIAI ĐOẠN 1 — Mô hình dữ liệu, Migration, Seed
+- **Thời gian hoàn thành**: 2026-10-13 14:12:00
+- **Trạng thái**: PASS
+- **Lệnh đã chạy**:
+  1. `dotnet build TimViecLam.sln`: Build succeeded (0 Warning(s), 0 Error(s))
+  2. `dotnet ef migrations add InitialCreate`: Thành công, sinh snapshot và migration 20 bảng.
+  3. `dotnet ef migrations script -o data/initial_create.sql`: Thành công, sinh file SQL hợp lệ (15,982 bytes).
+  4. `dotnet test --filter "FullyQualifiedName~Phase1"`: Passed: 21, Failed: 0, Skipped: 0, Total: 21, Duration: 3 s
+  5. Smoke test HTTP:
+     - `GET /` -> 200 OK
+     - `GET /health` -> 200 OK
+     - `GET /khong-ton-tai` -> 404 Not Found
+- **Danh sách mã AC đã phủ**:
+  - `AC-1.1`: Migration áp dụng thành công trên SQLite in-memory, khởi tạo đầy đủ 20 bảng; file script migration `data/initial_create.sql` hợp lệ.
+  - `AC-1.2`: Chạy `SeedAllAsync` 2 lần liên tiếp: số lượng bản ghi không đổi, không ném ngoại lệ (idempotent 100%).
+  - `AC-1.3`: Unique constraints được thực thi: trùng Username, Email, Company.Slug, (JobId, CandidateUserId), (UserId, JobId) đều ném `DbUpdateException`.
+  - `AC-1.4`: Xóa Province/Company đang có dữ liệu con tham chiếu bị chặn (Restrict) thành công.
+  - `AC-1.5`: Tất cả Index bắt buộc tồn tại trên EF Model: Job(ApprovalStatus, ExpiresAt), Job(CategoryId), Job(JobTypeId), Job(CompanyId), Job(SalaryMin, SalaryMax), Job(Slug), Workplace(Latitude, Longitude), Workplace(ProvinceId, DistrictId), Slug của Company/Province/District, Application(JobId, CandidateUserId).
+  - `AC-1.6`: `SearchTextBuilder` chuẩn hóa chuỗi tiếng Việt không dấu, chữ thường chính xác; an toàn khi null, rỗng hoặc toàn ký tự đặc biệt.
+  - `AC-1.7`: Dữ liệu seed thỏa mãn toàn bộ ràng buộc nghiệp vụ: tin Published có ExpiresAt tương lai; SalaryMin <= SalaryMax; tọa độ thật Việt Nam (Lat 8–24, Lng 102–110); 100% việc làm có `SearchText` không rỗng.
+  - `AC-1.8`: Mật khẩu được băm an toàn qua PBKDF2 với Salt 128-bit và 100,000 vòng lặp (IPasswordService), không có mật khẩu dạng văn bản thuần hoặc SHA-256 không salt.
+- **Giả định đã chọn**:
+  - Mật khẩu tài khoản demo là `Demo@123456`, được băm bằng PBKDF2 salt và định dạng lưu trữ `salt_base64:hash_base64`.
+  - Tích hợp tự động chạy Seeder khi database có thể kết nối (`context.Database.CanConnect()`) trong `Program.cs`.
+- **Rủi ro / việc để giai đoạn sau**:
+  - Chưa có Cookie Authentication và luồng Đăng ký / Đăng nhập / Đổi mật khẩu cho người dùng (sẽ làm ở Giai đoạn 2).
+  - Chưa có giao diện trang danh sách việc làm và bộ lọc tìm kiếm (sẽ triển khai ở Giai đoạn 2 và Giai đoạn 4).

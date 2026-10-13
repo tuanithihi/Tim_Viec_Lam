@@ -1,11 +1,12 @@
 using Microsoft.EntityFrameworkCore;
-using TimViecLam.Data;
+using TimViecLam.Areas.Admin.Data;
+using TimViecLam.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 var connection = builder.Configuration.GetConnectionString("DefaultConnection");
 
 // ── EF Core ──────────────────────────────────────────────────────────
-builder.Services.AddDbContext<AppDbContext>(options =>
+builder.Services.AddDbContext<DataContext>(options =>
     options.UseSqlServer(connection));
 
 // ── MVC (AutoValidateAntiforgery toàn cục) ───────────────────────────
@@ -34,11 +35,32 @@ builder.Services.AddHttpContextAccessor();
 // ── Health Check ──────────────────────────────────────────────────────
 builder.Services.AddHealthChecks();
 
-// ── Services (sẽ đăng ký Scoped ở GĐ sau) ───────────────────────────
+// ── Services ──────────────────────────────────────────────────────────
+builder.Services.AddScoped<IPasswordService, PasswordService>();
 // builder.Services.AddScoped<IJobService, JobService>();
 // builder.Services.AddScoped<IEmployerService, EmployerService>();
 
 var app = builder.Build();
+
+// ── Tự động Seed dữ liệu Idempotent ───────────────────────────────────
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        var context = services.GetRequiredService<DataContext>();
+        var passwordService = services.GetRequiredService<IPasswordService>();
+        if (context.Database.CanConnect())
+        {
+            await DataSeeder.SeedAllAsync(context, passwordService);
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogWarning(ex, "Chưa thể kết nối CSDL để nạp dữ liệu seed khi khởi động.");
+    }
+}
 
 // ── Pipeline ──────────────────────────────────────────────────────────
 if (!app.Environment.IsDevelopment())
