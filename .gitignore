@@ -1,0 +1,36 @@
+# ── Biên dịch ──────────────────────────────────────────────────
+bin/
+obj/
+
+# ── Visual Studio / VS Code ─────────────────────────────────────
+.vs/
+.vscode/
+*.user
+*.userosscache
+*.sln.docstates
+
+# ── Uploads của người dùng (không commit lên Git) ───────────────
+wwwroot/uploads/
+App_Data/
+
+# ── Kết quả test & coverage ─────────────────────────────────────
+TestResults/
+coverage*/
+*.trx
+*.coveragexml
+
+# ── Bí mật (User Secrets) ────────────────────────────────────────
+# KHÔNG commit secrets.json hay file chứa password thật
+# Sử dụng: dotnet user-secrets set "Key" "Value"
+secrets.json
+**/secrets.json
+
+# ── NuGet ──────────────────────────────────────────────────────
+*.nupkg
+.nuget/
+
+# ── macOS ──────────────────────────────────────────────────────
+.DS_Store
+
+# ── Publish output ─────────────────────────────────────────────
+publish/

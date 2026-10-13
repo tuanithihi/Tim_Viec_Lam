@@ -1,0 +1,125 @@
+@{
+    ViewData["Title"] = "TimViecLam - Tìm Việc Làm Nhanh, Lương Cao";
+    ViewData["Description"] = "Tìm kiếm việc làm phù hợp theo vị trí công việc, địa điểm, mức lương, ngành nghề. Hàng nghìn tin tuyển dụng mới mỗi ngày.";
+}
+
+<link rel="stylesheet" href="~/css/pages/home.css" asp-append-version="true" />
+
+<!-- Hero Search Section -->
+<section class="hero-section" aria-labelledby="heroTitle">
+    <div class="container-xl position-relative" style="z-index:1;">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h1 class="hero-title" id="heroTitle">
+                    Tìm Việc Làm Phù Hợp<br>
+                    <span style="opacity:0.9;">Lương Cao, Môi Trường Tốt</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Hơn 50.000 tin tuyển dụng từ 10.000+ nhà tuyển dụng uy tín toàn quốc
+                </p>
+
+                <!-- Search Box -->
+                <div class="search-box" role="search" aria-label="Tìm kiếm việc làm">
+                    <div class="d-flex align-items-center flex-grow-1 gap-2 px-2">
+                        <i class="bi bi-search text-muted" aria-hidden="true"></i>
+                        <label for="keywordInput" class="visually-hidden">Chức danh, từ khóa, kỹ năng</label>
+                        <input type="text"
+                               id="keywordInput"
+                               name="q"
+                               class="form-control border-0 shadow-none"
+                               placeholder="Chức danh, từ khóa, kỹ năng..."
+                               autocomplete="off"
+                               aria-label="Nhập từ khóa tìm việc">
+                    </div>
+                    <div class="search-divider d-none d-md-block" role="separator"></div>
+                    <div class="d-flex align-items-center flex-grow-1 gap-2 px-2">
+                        <i class="bi bi-geo-alt text-muted" aria-hidden="true"></i>
+                        <label for="locationInput" class="visually-hidden">Địa điểm làm việc</label>
+                        <input type="text"
+                               id="locationInput"
+                               name="location"
+                               class="form-control border-0 shadow-none"
+                               placeholder="Tỉnh / Thành phố..."
+                               autocomplete="off"
+                               aria-label="Nhập địa điểm làm việc">
+                    </div>
+                    <button type="button"
+                            id="btnSearch"
+                            class="search-btn"
+                            onclick="performSearch()"
+                            aria-label="Tìm kiếm việc làm ngay">
+                        <i class="bi bi-search" aria-hidden="true"></i>
+                        <span>Tìm việc ngay</span>
+                    </button>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="stats-strip justify-content-center mt-4">
+                    <div class="stat-item">
+                        <i class="bi bi-briefcase-fill" aria-hidden="true"></i>
+                        <span><strong>50.000+</strong> việc làm</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="bi bi-building-fill" aria-hidden="true"></i>
+                        <span><strong>10.000+</strong> nhà tuyển dụng</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="bi bi-people-fill" aria-hidden="true"></i>
+                        <span><strong>1 triệu+</strong> ứng viên</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Popular Jobs Section (placeholder) -->
+<section class="py-5" aria-labelledby="popularJobsTitle">
+    <div class="container-xl">
+        <div class="section-header">
+            <h2 class="section-title" id="popularJobsTitle">Việc làm nổi bật</h2>
+            <a href="/viec-lam" class="btn-brand-outline btn btn-sm">
+                Xem tất cả <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
+            </a>
+        </div>
+
+        <div class="empty-state">
+            <div class="empty-state-icon" aria-hidden="true">
+                <i class="bi bi-briefcase"></i>
+            </div>
+            <p class="empty-state-title">Chưa có tin tuyển dụng</p>
+            <p class="empty-state-desc">
+                Dữ liệu việc làm sẽ được bổ sung ở các giai đoạn sau.
+                Hãy đăng ký để nhận thông báo sớm nhất!
+            </p>
+            <a href="/Account/Register" class="btn-brand btn btn-sm" id="btnRegisterHero">
+                <i class="bi bi-person-plus me-1" aria-hidden="true"></i>Đăng ký ngay
+            </a>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+<script>
+    function performSearch() {
+        var keyword = document.getElementById('keywordInput').value.trim();
+        var location = document.getElementById('locationInput').value.trim();
+        var url = '/viec-lam';
+        var params = [];
+        if (keyword) params.push('q=' + encodeURIComponent(keyword));
+        if (location) params.push('dia-diem=' + encodeURIComponent(location));
+        if (params.length > 0) url += '?' + params.join('&');
+        window.location.href = url;
+    }
+
+    // Enter to search
+    ['keywordInput', 'locationInput'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') performSearch();
+            });
+        }
+    });
+</script>
+}

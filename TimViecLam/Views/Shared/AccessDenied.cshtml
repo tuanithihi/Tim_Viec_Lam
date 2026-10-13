@@ -1,0 +1,26 @@
+@{
+    ViewData["Title"] = "Từ chối truy cập (403)";
+    Layout = "_Layout";
+}
+
+<link rel="stylesheet" href="~/css/pages/error.css" asp-append-version="true" />
+
+<div class="error-page-container" role="main">
+    <div class="error-card">
+        <div class="error-code" style="color: var(--color-warning);" aria-hidden="true">403</div>
+        <h1 class="error-heading">Từ chối truy cập</h1>
+        <p class="error-description">
+            Bạn không có quyền truy cập trang này.
+            Vui lòng đăng nhập bằng tài khoản phù hợp hoặc liên hệ quản trị viên.
+        </p>
+
+        <div class="error-actions">
+            <a href="/" class="btn-brand btn">
+                <i class="bi bi-house me-1" aria-hidden="true"></i>Về trang chủ
+            </a>
+            <a href="/Account/Login" class="btn btn-neutral">
+                <i class="bi bi-box-arrow-in-right me-1" aria-hidden="true"></i>Đăng nhập
+            </a>
+        </div>
+    </div>
+</div>

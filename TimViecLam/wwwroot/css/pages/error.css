@@ -1,0 +1,49 @@
+/* ── Error / NotFound / AccessDenied Pages ─────────────────── */
+.error-page-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: var(--space-8) var(--space-4);
+}
+
+.error-card {
+  text-align: center;
+  max-width: 480px;
+  width: 100%;
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: var(--space-12) var(--space-8);
+  box-shadow: var(--shadow-card);
+}
+
+.error-code {
+  font-size: 5rem;
+  font-weight: var(--font-bold);
+  line-height: 1;
+  margin-bottom: var(--space-4);
+  color: var(--brand-primary);
+}
+
+.error-heading {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  margin-bottom: var(--space-3);
+  color: var(--color-text-primary);
+}
+
+.error-description {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  margin-bottom: var(--space-8);
+}
+
+.error-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}

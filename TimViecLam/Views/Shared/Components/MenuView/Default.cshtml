@@ -1,0 +1,114 @@
+@{
+    var currentPath = Context.Request.Path.Value ?? "/";
+    bool IsActive(string path) => currentPath.StartsWith(path, StringComparison.OrdinalIgnoreCase);
+    bool isLoggedIn = false; // GĐ 0: chưa có auth, để false
+}
+
+<header class="site-header">
+    <div class="container-xl">
+        <div class="site-navbar">
+            <!-- Brand Logo -->
+            <a href="/" class="navbar-brand" aria-label="TimViecLam - Trang chủ">
+                <div class="brand-icon" aria-hidden="true">
+                    <i class="bi bi-briefcase-fill"></i>
+                </div>
+                <span class="brand-name">TimViecLam</span>
+            </a>
+
+            <!-- Quick Navigation Links (Desktop) -->
+            <ul class="navbar-nav-links d-none d-lg-flex" role="list">
+                <li role="listitem">
+                    <a href="/viec-lam" class="nav-link @(IsActive("/viec-lam") ? "active" : "")"
+                       aria-current="@(IsActive("/viec-lam") ? "page" : null)">Việc làm</a>
+                </li>
+                <li role="listitem">
+                    <a href="/cong-ty" class="nav-link @(IsActive("/cong-ty") ? "active" : "")"
+                       aria-current="@(IsActive("/cong-ty") ? "page" : null)">Công ty</a>
+                </li>
+                <li role="listitem">
+                    <a href="/blog" class="nav-link @(IsActive("/blog") ? "active" : "")"
+                       aria-current="@(IsActive("/blog") ? "page" : null)">Blog</a>
+                </li>
+                <li role="listitem">
+                    <a href="/lien-he" class="nav-link @(IsActive("/lien-he") ? "active" : "")"
+                       aria-current="@(IsActive("/lien-he") ? "page" : null)">Liên hệ</a>
+                </li>
+            </ul>
+
+            <!-- Actions -->
+            <div class="navbar-actions">
+                <a href="/dang-tin" class="btn-post-job d-none d-md-inline-flex" id="btnPostJob">
+                    <i class="bi bi-plus-circle" aria-hidden="true"></i>
+                    <span>Đăng tuyển</span>
+                </a>
+
+                @if (!isLoggedIn)
+                {
+                    <a href="/Account/Login" class="btn btn-neutral btn-sm d-none d-md-inline-flex" id="btnLogin">
+                        <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+                        Đăng nhập
+                    </a>
+                    <a href="/Account/Register" class="btn-brand btn btn-sm d-none d-md-inline-flex" id="btnRegister">
+                        <i class="bi bi-person-plus" aria-hidden="true"></i>
+                        Đăng ký
+                    </a>
+                }
+
+                <!-- Mobile toggle -->
+                <button class="navbar-toggler-custom d-lg-none"
+                        type="button"
+                        id="mobileMenuToggle"
+                        aria-expanded="false"
+                        aria-controls="mobileMenu"
+                        aria-label="Mở menu điều hướng">
+                    <i class="bi bi-list fs-5" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu Collapse -->
+        <nav id="mobileMenu" class="d-lg-none" style="display:none;" aria-label="Menu điều hướng di động">
+            <ul class="list-unstyled py-3 mb-0 border-top" style="gap:var(--space-1);" role="list">
+                <li role="listitem">
+                    <a href="/viec-lam" class="nav-link py-2 px-2" style="font-size:var(--text-sm);">
+                        <i class="bi bi-briefcase me-2" aria-hidden="true"></i>Việc làm
+                    </a>
+                </li>
+                <li role="listitem">
+                    <a href="/cong-ty" class="nav-link py-2 px-2" style="font-size:var(--text-sm);">
+                        <i class="bi bi-building me-2" aria-hidden="true"></i>Công ty
+                    </a>
+                </li>
+                <li role="listitem">
+                    <a href="/blog" class="nav-link py-2 px-2" style="font-size:var(--text-sm);">
+                        <i class="bi bi-newspaper me-2" aria-hidden="true"></i>Blog
+                    </a>
+                </li>
+                <li role="listitem">
+                    <a href="/lien-he" class="nav-link py-2 px-2" style="font-size:var(--text-sm);">
+                        <i class="bi bi-telephone me-2" aria-hidden="true"></i>Liên hệ
+                    </a>
+                </li>
+                <li role="listitem" class="mt-2 pt-2 border-top d-flex gap-2 px-2">
+                    <a href="/Account/Login" class="btn btn-neutral btn-sm flex-fill" id="btnLoginMobile">Đăng nhập</a>
+                    <a href="/Account/Register" class="btn-brand btn btn-sm flex-fill" id="btnRegisterMobile">Đăng ký</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+<script>
+    // Mobile menu toggle
+    (function () {
+        var btn = document.getElementById('mobileMenuToggle');
+        var menu = document.getElementById('mobileMenu');
+        if (btn && menu) {
+            btn.addEventListener('click', function () {
+                var expanded = btn.getAttribute('aria-expanded') === 'true';
+                btn.setAttribute('aria-expanded', !expanded);
+                menu.style.display = expanded ? 'none' : 'block';
+            });
+        }
+    })();
+</script>
