@@ -25,3 +25,4 @@ public class LoggingEmailSender : IEmailSender
         return Task.CompletedTask;
     }
 }
+

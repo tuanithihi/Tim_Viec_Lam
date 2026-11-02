@@ -384,8 +384,8 @@ public static class DataSeeder
     public static async Task SeedUsersAndCompaniesAsync(DataContext context, IPasswordService passwordService)
     {
         // ── Danh sách tài khoản demo ──────────────────────────────────────────
-        // Mật khẩu demo: Demo@123456 (đáp ứng tiêu chuẩn chữ hoa, thường, số, ký tự đặc biệt)
-        var defaultPasswordHash = passwordService.HashPassword("Demo@123456");
+        // Mật khẩu demo: 123456
+        var defaultPasswordHash = passwordService.HashPassword("123456");
 
         var demoUsers = new (string Username, string Email, string Role, string FullName, string Phone)[]
         {
@@ -414,10 +414,12 @@ public static class DataSeeder
                 };
                 context.Users.Add(user);
             }
-            else if (user.PasswordHash.Contains(':'))
+            else
             {
-                // Nâng cấp mật khẩu sang định dạng PasswordHasher mới
-                user.PasswordHash = passwordService.HashPassword("Demo@123456");
+                // Cập nhật lại mật khẩu cho các tài khoản demo thành 123456
+                user.PasswordHash = defaultPasswordHash;
+                user.FailedLoginCount = 0;
+                user.LockoutEnd = null;
             }
         }
         await context.SaveChangesAsync();

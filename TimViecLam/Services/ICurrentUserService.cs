@@ -40,3 +40,4 @@ public interface ICurrentUserService
     /// </summary>
     bool IsAuthenticated { get; }
 }
+

@@ -10,3 +10,4 @@ public interface IEmailSender
     /// </summary>
     Task SendEmailAsync(string toEmail, string subject, string htmlMessage);
 }
+

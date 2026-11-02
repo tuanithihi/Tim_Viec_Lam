@@ -206,3 +206,4 @@ public class ResetPasswordViewModel
     [Display(Name = "Xác nhận mật khẩu mới")]
     public string ConfirmNewPassword { get; set; } = string.Empty;
 }
+

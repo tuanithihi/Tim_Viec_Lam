@@ -45,3 +45,4 @@ public class CurrentUserService : ICurrentUserService
 
     public bool IsAuthenticated => User?.Identity?.IsAuthenticated ?? false;
 }
+
