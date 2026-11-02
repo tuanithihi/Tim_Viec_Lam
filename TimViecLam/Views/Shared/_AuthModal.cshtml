@@ -236,12 +236,27 @@
 
         authModalEl.addEventListener('show.bs.modal', function(e) {
             var tab = e.relatedTarget && e.relatedTarget.dataset.openTab;
-            authSwitchTab(tab === 'register' ? 'register' : 'login');
+            if (tab) {
+                authSwitchTab(tab === 'register' ? 'register' : 'login');
+            }
             var loginForm = document.getElementById('loginForm');
             var regForm = document.getElementById('registerForm');
             if (loginForm) loginForm.reset();
             if (regForm) regForm.reset();
             authClearAlert();
+        });
+
+        // Bổ sung listener trực tiếp cho các nút mở modal để chắc chắn hoạt động ngay cả khi data-bs-toggle bị hoãn
+        document.querySelectorAll('[data-bs-target="#authModal"]').forEach(function(triggerBtn) {
+            triggerBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                var tab = this.getAttribute('data-open-tab') || 'login';
+                authSwitchTab(tab);
+                if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                    var modalInstance = bootstrap.Modal.getOrCreateInstance(authModalEl);
+                    modalInstance.show();
+                }
+            });
         });
 
         var loginForm = document.getElementById('loginForm');
@@ -307,3 +322,4 @@
         }
     });
 </script>
+
