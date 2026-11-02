@@ -1,0 +1,80 @@
+@model TimViecLam.Models.ViewModels.ProfileViewModel
+@{
+    ViewData["Title"] = "Hồ sơ tài khoản";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 p-md-5">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="mb-0 font-bold" style="color: var(--brand-primary);">Hồ sơ cá nhân</h2>
+                        <span class="badge bg-danger">@Model.Role</span>
+                    </div>
+
+                    <form asp-action="Profile" method="post" novalidate>
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label font-medium text-muted">Tên đăng nhập</label>
+                                <input type="text" class="form-control bg-light" value="@Model.Username" readonly />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label font-medium text-muted">Email</label>
+                                <input type="text" class="form-control bg-light" value="@Model.Email" readonly />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="FullName" class="form-label font-medium"></label>
+                            <input asp-for="FullName" class="form-control" placeholder="Họ và tên đầy đủ" />
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Phone" class="form-label font-medium"></label>
+                            <input asp-for="Phone" class="form-control" placeholder="0901234567" />
+                            <span asp-validation-for="Phone" class="text-danger small"></span>
+                        </div>
+
+                        @if (Model.Company != null)
+                        {
+                            <div class="card bg-light border-0 p-3 mb-4">
+                                <h6 class="font-bold text-secondary mb-2">Thông tin doanh nghiệp đại diện</h6>
+                                <p class="mb-1"><strong>Tên công ty:</strong> @Model.Company.Name</p>
+                                <p class="mb-1"><strong>Trạng thái duyệt:</strong> 
+                                    @if (Model.Company.Status == "Approved")
+                                    {
+                                        <span class="badge bg-success">Đã duyệt</span>
+                                    }
+                                    else if (Model.Company.Status == "Suspended")
+                                    {
+                                        <span class="badge bg-danger">Tạm khóa</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">Chờ duyệt</span>
+                                    }
+                                </p>
+                                <p class="mb-0"><strong>Địa chỉ:</strong> @Model.Company.Address</p>
+                            </div>
+                        }
+
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <a href="/doi-mat-khau" class="btn btn-outline-secondary">
+                                <i class="bi bi-key me-1"></i>Đổi mật khẩu
+                            </a>
+                            <button type="submit" class="btn btn-brand px-4 font-medium">Lưu thay đổi</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

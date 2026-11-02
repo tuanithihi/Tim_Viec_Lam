@@ -1,0 +1,120 @@
+@model TimViecLam.Models.ViewModels.RegisterEmployerViewModel
+@{
+    ViewData["Title"] = "Đăng ký Nhà tuyển dụng";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 p-md-5">
+                    <h2 class="text-center mb-2 font-bold" style="color: var(--brand-primary);">Đăng ký Doanh nghiệp / Nhà tuyển dụng</h2>
+                    <p class="text-center text-muted mb-4 small">Tiếp cận nguồn nhân lực chất lượng cao, đăng tin tuyển dụng nhanh chóng và hiệu quả.</p>
+
+                    <form asp-action="RegisterEmployer" method="post" novalidate>
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <h5 class="border-bottom pb-2 mb-3 text-secondary">1. Thông tin doanh nghiệp</h5>
+
+                        <div class="mb-3">
+                            <label asp-for="CompanyName" class="form-label font-medium"></label>
+                            <input asp-for="CompanyName" class="form-control" placeholder="Tên công ty / Tập đoàn đầy đủ" />
+                            <span asp-validation-for="CompanyName" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="TaxCode" class="form-label font-medium"></label>
+                                <input asp-for="TaxCode" class="form-control" placeholder="Mã số thuế doanh nghiệp" />
+                                <span asp-validation-for="TaxCode" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="CompanySize" class="form-label font-medium"></label>
+                                <select asp-for="CompanySize" class="form-select">
+                                    <option value="Micro">Dưới 10 nhân viên (Micro)</option>
+                                    <option value="Small" selected>10 - 50 nhân viên (Small)</option>
+                                    <option value="Medium">50 - 300 nhân viên (Medium)</option>
+                                    <option value="Large">300 - 1000 nhân viên (Large)</option>
+                                    <option value="Enterprise">Trên 1000 nhân viên (Enterprise)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="CompanyAddress" class="form-label font-medium"></label>
+                            <input asp-for="CompanyAddress" class="form-control" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành" />
+                            <span asp-validation-for="CompanyAddress" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="CompanyPhone" class="form-label font-medium"></label>
+                                <input asp-for="CompanyPhone" class="form-control" placeholder="Số điện thoại bàn / hotline" />
+                                <span asp-validation-for="CompanyPhone" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="CompanyEmail" class="form-label font-medium"></label>
+                                <input asp-for="CompanyEmail" class="form-control" placeholder="contact@company.com" />
+                                <span asp-validation-for="CompanyEmail" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <h5 class="border-bottom pb-2 my-3 text-secondary">2. Thông tin tài khoản quản trị</h5>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Username" class="form-label font-medium"></label>
+                                <input asp-for="Username" class="form-control" placeholder="Username quản trị" autocomplete="username" />
+                                <span asp-validation-for="Username" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Email" class="form-label font-medium"></label>
+                                <input asp-for="Email" class="form-control" placeholder="Email người đại diện nhận thông báo" autocomplete="email" />
+                                <span asp-validation-for="Email" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FullName" class="form-label font-medium"></label>
+                                <input asp-for="FullName" class="form-control" placeholder="Họ và tên người đại diện" autocomplete="name" />
+                                <span asp-validation-for="FullName" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Phone" class="form-label font-medium"></label>
+                                <input asp-for="Phone" class="form-control" placeholder="Số di động người đại diện" autocomplete="tel" />
+                                <span asp-validation-for="Phone" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Password" class="form-label font-medium"></label>
+                                <input asp-for="Password" class="form-control" placeholder="Tối thiểu 8 ký tự, có chữ và số" autocomplete="new-password" />
+                                <span asp-validation-for="Password" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ConfirmPassword" class="form-label font-medium"></label>
+                                <input asp-for="ConfirmPassword" class="form-control" placeholder="Xác nhận lại mật khẩu" autocomplete="new-password" />
+                                <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-brand w-100 py-2 mt-4 font-medium">Đăng ký Nhà tuyển dụng</button>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <div class="text-center">
+                        <span class="text-muted small">Đã có tài khoản? </span>
+                        <a href="/dang-nhap" class="text-decoration-none font-medium" style="color: var(--brand-primary-hover);">Đăng nhập ngay</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,7 +1,10 @@
 @{
     var currentPath = Context.Request.Path.Value ?? "/";
     bool IsActive(string path) => currentPath.StartsWith(path, StringComparison.OrdinalIgnoreCase);
-    bool isLoggedIn = false; // GĐ 0: chưa có auth, để false
+    bool isLoggedIn = User.Identity?.IsAuthenticated == true;
+    string displayName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "Tài khoản";
+    bool isSuperAdmin = User.IsInRole("SuperAdmin");
+    bool isEmployer = User.IsInRole("Employer");
 }
 
 <header class="site-header">
@@ -44,14 +47,52 @@
 
                 @if (!isLoggedIn)
                 {
-                    <a href="/Account/Login" class="btn btn-neutral btn-sm d-none d-md-inline-flex" id="btnLogin">
+                    <a href="/dang-nhap" class="btn btn-neutral btn-sm d-none d-md-inline-flex" id="btnLogin">
                         <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
                         Đăng nhập
                     </a>
-                    <a href="/Account/Register" class="btn-brand btn btn-sm d-none d-md-inline-flex" id="btnRegister">
+                    <a href="/dang-ky" class="btn-brand btn btn-sm d-none d-md-inline-flex" id="btnRegister">
                         <i class="bi bi-person-plus" aria-hidden="true"></i>
                         Đăng ký
                     </a>
+                }
+                else
+                {
+                    <div class="dropdown d-none d-md-inline-block">
+                        <button class="btn btn-neutral btn-sm dropdown-toggle d-flex align-items-center gap-1" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle"></i>
+                            <span class="text-truncate" style="max-width: 140px;">@displayName</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="userMenuDropdown">
+                            @if (isSuperAdmin)
+                            {
+                                <li>
+                                    <a class="dropdown-item text-danger font-medium" href="/Admin">
+                                        <i class="bi bi-shield-lock me-2"></i>Khu quản trị Admin
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                            }
+                            <li>
+                                <a class="dropdown-item" href="/ho-so">
+                                    <i class="bi bi-person-lines-fill me-2"></i>Hồ sơ cá nhân
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/doi-mat-khau">
+                                    <i class="bi bi-key me-2"></i>Đổi mật khẩu
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form asp-controller="Account" asp-action="Logout" method="post" class="px-2 py-1">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                                        <i class="bi bi-box-arrow-right me-1"></i>Đăng xuất
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
                 }
 
                 <!-- Mobile toggle -->
@@ -89,10 +130,33 @@
                         <i class="bi bi-telephone me-2" aria-hidden="true"></i>Liên hệ
                     </a>
                 </li>
-                <li role="listitem" class="mt-2 pt-2 border-top d-flex gap-2 px-2">
-                    <a href="/Account/Login" class="btn btn-neutral btn-sm flex-fill" id="btnLoginMobile">Đăng nhập</a>
-                    <a href="/Account/Register" class="btn-brand btn btn-sm flex-fill" id="btnRegisterMobile">Đăng ký</a>
-                </li>
+                @if (!isLoggedIn)
+                {
+                    <li role="listitem" class="mt-2 pt-2 border-top d-flex gap-2 px-2">
+                        <a href="/dang-nhap" class="btn btn-neutral btn-sm flex-fill" id="btnLoginMobile">Đăng nhập</a>
+                        <a href="/dang-ky" class="btn-brand btn btn-sm flex-fill" id="btnRegisterMobile">Đăng ký</a>
+                    </li>
+                }
+                else
+                {
+                    <li role="listitem" class="mt-2 pt-2 border-top px-2">
+                        <div class="mb-2 font-medium">Xin chào, @displayName</div>
+                        <div class="d-flex flex-column gap-1">
+                            @if (isSuperAdmin)
+                            {
+                                <a href="/Admin" class="btn btn-outline-danger btn-sm text-start">
+                                    <i class="bi bi-shield-lock me-1"></i>Khu quản trị Admin
+                                </a>
+                            }
+                            <a href="/ho-so" class="btn btn-outline-secondary btn-sm text-start">
+                                <i class="bi bi-person-lines-fill me-1"></i>Hồ sơ cá nhân
+                            </a>
+                            <form asp-controller="Account" asp-action="Logout" method="post" class="mt-1">
+                                <button type="submit" class="btn btn-danger btn-sm w-100">Đăng xuất</button>
+                            </form>
+                        </div>
+                    </li>
+                }
             </ul>
         </nav>
     </div>

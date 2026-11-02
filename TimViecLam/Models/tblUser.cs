@@ -54,6 +54,13 @@ public class tblUser
     [Display(Name = "Thời gian khóa tài khoản")]
     public DateTime? LockoutEnd { get; set; }
 
+    [StringLength(256)]
+    [Display(Name = "Bản băm token đặt lại mật khẩu")]
+    public string? ResetTokenHash { get; set; }
+
+    [Display(Name = "Thời gian hết hạn token đặt lại mật khẩu")]
+    public DateTime? ResetTokenExpiresAt { get; set; }
+
     [Display(Name = "Ngày tạo")]
     public DateTime CreatedAt { get; set; } = DateTime.Now;
 

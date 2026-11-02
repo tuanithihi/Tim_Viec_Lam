@@ -1,0 +1,55 @@
+@model TimViecLam.Models.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Đăng nhập tài khoản";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 p-md-5">
+                    <h2 class="text-center mb-4 font-bold" style="color: var(--brand-primary);">Đăng nhập</h2>
+
+                    <form asp-action="Login" method="post" novalidate>
+                        <input type="hidden" asp-for="ReturnUrl" />
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="UsernameOrEmail" class="form-label font-medium"></label>
+                            <input asp-for="UsernameOrEmail" class="form-control" placeholder="Nhập username hoặc email" autofocus autocomplete="username" />
+                            <span asp-validation-for="UsernameOrEmail" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Password" class="form-label font-medium"></label>
+                            <input asp-for="Password" class="form-control" placeholder="Nhập mật khẩu" autocomplete="current-password" />
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div class="form-check">
+                                <input asp-for="RememberMe" class="form-check-input" />
+                                <label asp-for="RememberMe" class="form-check-label"></label>
+                            </div>
+                            <a href="/quen-mat-khau" class="text-decoration-none small" style="color: var(--brand-primary-hover);">Quên mật khẩu?</a>
+                        </div>
+
+                        <button type="submit" class="btn btn-brand w-100 py-2 font-medium">Đăng nhập</button>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <div class="text-center">
+                        <p class="mb-2 text-muted small">Chưa có tài khoản?</p>
+                        <a href="/dang-ky" class="btn btn-outline-secondary btn-sm me-2">Đăng ký Ứng viên</a>
+                        <a href="/dang-ky-nha-tuyen-dung" class="btn btn-outline-danger btn-sm">Đăng ký Nhà tuyển dụng</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

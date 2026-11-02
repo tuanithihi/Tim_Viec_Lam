@@ -1,0 +1,72 @@
+@model TimViecLam.Models.ViewModels.RegisterCandidateViewModel
+@{
+    ViewData["Title"] = "Đăng ký tài khoản Ứng viên";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 p-md-5">
+                    <h2 class="text-center mb-3 font-bold" style="color: var(--brand-primary);">Đăng ký Ứng viên</h2>
+                    <p class="text-center text-muted mb-4 small">Tạo hồ sơ tìm việc miễn phí, kết nối hàng nghìn nhà tuyển dụng hàng đầu.</p>
+
+                    <form asp-action="Register" method="post" novalidate>
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Username" class="form-label font-medium"></label>
+                            <input asp-for="Username" class="form-control" placeholder="Từ 3 đến 50 ký tự (chữ cái, số, _)" autocomplete="username" />
+                            <span asp-validation-for="Username" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label font-medium"></label>
+                            <input asp-for="Email" class="form-control" placeholder="example@domain.com" autocomplete="email" />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FullName" class="form-label font-medium"></label>
+                                <input asp-for="FullName" class="form-control" placeholder="Nguyễn Văn A" autocomplete="name" />
+                                <span asp-validation-for="FullName" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Phone" class="form-label font-medium"></label>
+                                <input asp-for="Phone" class="form-control" placeholder="0901234567" autocomplete="tel" />
+                                <span asp-validation-for="Phone" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Password" class="form-label font-medium"></label>
+                                <input asp-for="Password" class="form-control" placeholder="Tối thiểu 8 ký tự, có chữ và số" autocomplete="new-password" />
+                                <span asp-validation-for="Password" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ConfirmPassword" class="form-label font-medium"></label>
+                                <input asp-for="ConfirmPassword" class="form-control" placeholder="Nhập lại mật khẩu" autocomplete="new-password" />
+                                <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-brand w-100 py-2 mt-3 font-medium">Hoàn tất đăng ký</button>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <div class="text-center">
+                        <span class="text-muted small">Đã có tài khoản? </span>
+                        <a href="/dang-nhap" class="text-decoration-none font-medium" style="color: var(--brand-primary-hover);">Đăng nhập ngay</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

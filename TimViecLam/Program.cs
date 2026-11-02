@@ -1,3 +1,8 @@
+using System.Security.Claims;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using TimViecLam.Areas.Admin.Data;
 using TimViecLam.Services;
@@ -13,6 +18,79 @@ builder.Services.AddDbContext<DataContext>(options =>
 builder.Services.AddControllersWithViews(options =>
 {
     options.Filters.Add(new Microsoft.AspNetCore.Mvc.AutoValidateAntiforgeryTokenAttribute());
+});
+
+// ── Cookie Authentication ─────────────────────────────────────────────
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.Cookie.Name = ".TimViecLam.Auth";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.SlidingExpiration = true;
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.LoginPath = "/dang-nhap";
+        options.LogoutPath = "/dang-xuat";
+        options.AccessDeniedPath = "/Home/AccessDenied";
+        options.Events = new CookieAuthenticationEvents
+        {
+            OnValidatePrincipal = async context =>
+            {
+                var db = context.HttpContext.RequestServices.GetRequiredService<DataContext>();
+                var userIdStr = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (int.TryParse(userIdStr, out int userId))
+                {
+                    var user = await db.Users.Include(u => u.Company).AsNoTracking().FirstOrDefaultAsync(u => u.UserId == userId);
+                    if (user == null || !user.IsActive)
+                    {
+                        context.RejectPrincipal();
+                        await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                        return;
+                    }
+
+                    // Employer bị Suspended giữa phiên -> request kế tiếp bị chặn (AC-S1.5)
+                    if (user.Role == "Employer" && user.Company != null && user.Company.Status == "Suspended")
+                    {
+                        context.RejectPrincipal();
+                        await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                        return;
+                    }
+                }
+                else
+                {
+                    context.RejectPrincipal();
+                }
+            }
+        };
+    });
+
+// ── Phân quyền (Authorization Policies) ───────────────────────────────
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("CandidateOnly", p => p.RequireRole("Candidate"));
+    options.AddPolicy("EmployerOnly", p => p.RequireRole("Employer"));
+    options.AddPolicy("SuperAdminOnly", p => p.RequireRole("SuperAdmin"));
+    options.AddPolicy("ApprovedEmployer", p => p.RequireRole("Employer").RequireAssertion(ctx =>
+    {
+        return ctx.User.FindFirst("CompanyStatus")?.Value == "Approved";
+    }));
+});
+
+// ── Rate Limiter ──────────────────────────────────────────────────────
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("auth-policy", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
 });
 
 // ── Cache (Dùng cho danh mục ít thay đổi) ────────────────────────────
@@ -37,6 +115,8 @@ builder.Services.AddHealthChecks();
 
 // ── Services ──────────────────────────────────────────────────────────
 builder.Services.AddScoped<IPasswordService, PasswordService>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<IEmailSender, LoggingEmailSender>();
 // builder.Services.AddScoped<IJobService, JobService>();
 // builder.Services.AddScoped<IEmployerService, EmployerService>();
 
@@ -73,8 +153,15 @@ else
     app.UseDeveloperExceptionPage();
 }
 
-// Xử lý trang lỗi tùy biến (404, 403...) không lộ stack trace
-app.UseStatusCodePagesWithReExecute("/Home/NotFound");
+// Xử lý trang lỗi 404 không lộ stack trace
+app.UseStatusCodePages(context =>
+{
+    if (context.HttpContext.Response.StatusCode == StatusCodes.Status404NotFound && !context.HttpContext.Response.HasStarted)
+    {
+        context.HttpContext.Response.Redirect("/Home/NotFound");
+    }
+    return Task.CompletedTask;
+});
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
@@ -112,14 +199,56 @@ app.Use(async (context, next) =>
     await next();
 });
 
-app.UseSession();       // ← phải đặt TRƯỚC UseAuthorization
+app.UseRateLimiter();
+app.UseSession();
+app.UseAuthentication();
 app.UseAuthorization();
 
 // ── Health Endpoint ───────────────────────────────────────────────────
 app.MapHealthChecks("/health");
 
-// ── Friendly Routes (khai báo TRƯỚC default route) ───────────────────
+// ── Friendly Routes Cho Tài Khoản (khai báo TRƯỚC default route) ──────
+app.MapControllerRoute(
+    name:    "dang_nhap",
+    pattern: "dang-nhap",
+    defaults: new { controller = "Account", action = "Login" });
 
+app.MapControllerRoute(
+    name:    "dang_ky",
+    pattern: "dang-ky",
+    defaults: new { controller = "Account", action = "Register" });
+
+app.MapControllerRoute(
+    name:    "dang_ky_nha_tuyen_dung",
+    pattern: "dang-ky-nha-tuyen-dung",
+    defaults: new { controller = "Account", action = "RegisterEmployer" });
+
+app.MapControllerRoute(
+    name:    "dang_xuat",
+    pattern: "dang-xuat",
+    defaults: new { controller = "Account", action = "Logout" });
+
+app.MapControllerRoute(
+    name:    "ho_so",
+    pattern: "ho-so",
+    defaults: new { controller = "Account", action = "Profile" });
+
+app.MapControllerRoute(
+    name:    "doi_mat_khau",
+    pattern: "doi-mat-khau",
+    defaults: new { controller = "Account", action = "ChangePassword" });
+
+app.MapControllerRoute(
+    name:    "quen_mat_khau",
+    pattern: "quen-mat-khau",
+    defaults: new { controller = "Account", action = "ForgotPassword" });
+
+app.MapControllerRoute(
+    name:    "dat_lai_mat_khau",
+    pattern: "dat-lai-mat-khau",
+    defaults: new { controller = "Account", action = "ResetPassword" });
+
+// ── Friendly Routes Cho Việc Làm & Doanh Nghiệp ────────────────────────
 app.MapControllerRoute(
     name:    "viec_lam_detail",
     pattern: "viec-lam/{slug}-{id:int}",
@@ -150,11 +279,12 @@ app.MapControllerRoute(
     pattern: "dang-tin",
     defaults: new { controller = "Employer", action = "PostJob" });
 
-// ── Standard Routes ───────────────────────────────────────────────────
+// ── Area Routes ───────────────────────────────────────────────────────
 app.MapControllerRoute(
     name:    "areas",
     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
+// ── Default Route ─────────────────────────────────────────────────────
 app.MapControllerRoute(
     name:    "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

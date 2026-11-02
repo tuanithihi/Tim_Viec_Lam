@@ -414,6 +414,11 @@ public static class DataSeeder
                 };
                 context.Users.Add(user);
             }
+            else if (user.PasswordHash.Contains(':'))
+            {
+                // Nâng cấp mật khẩu sang định dạng PasswordHasher mới
+                user.PasswordHash = passwordService.HashPassword("Demo@123456");
+            }
         }
         await context.SaveChangesAsync();
 
