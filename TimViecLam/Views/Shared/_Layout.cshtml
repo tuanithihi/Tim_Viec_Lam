@@ -166,6 +166,11 @@
             integrity="sha384-YvpcrYf0tY3lHB60NNkmXc4s9bIOgUxi8T/jzmJJx0sbLz0DG3R4fM5bnkRHK10"
             crossorigin="anonymous"></script>
 
+    @if (User.Identity?.IsAuthenticated != true)
+    {
+        <partial name="_AuthModal" />
+    }
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

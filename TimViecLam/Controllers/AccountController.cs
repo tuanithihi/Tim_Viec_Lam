@@ -337,6 +337,173 @@ public class AccountController : Controller
     }
 
     // ═══════════════════════════════════════════════════════════════
+    //  MODAL AUTH (AJAX) ─ Đăng nhập & Đăng ký cửa sổ Modal
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Xử lý đăng nhập qua modal popup (AJAX JSON).
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> LoginModal(LoginViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            var firstErr = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .FirstOrDefault() ?? "Vui lòng nhập đầy đủ thông tin đăng nhập.";
+            return Json(new { success = false, message = firstErr });
+        }
+
+        var query = model.UsernameOrEmail.Trim().ToLower();
+
+        var user = await _context.Users
+            .Include(u => u.Company)
+            .FirstOrDefaultAsync(u => u.Username.ToLower() == query || u.Email.ToLower() == query);
+
+        // 1. Chống Timing Attack: nếu không có tài khoản, băm giả lập thời gian phản hồi tương đương
+        if (user == null)
+        {
+            _passwordService.VerifyPassword("DummyPassword123", "AQAAAAIAAYagAAAAEP0dummyHashSaltValueForTimingAttackDefense==");
+            return Json(new { success = false, message = "Tên đăng nhập/email hoặc mật khẩu không chính xác." });
+        }
+
+        // 2. Kiểm tra khóa tài khoản tạm thời
+        if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTime.UtcNow)
+        {
+            return Json(new { success = false, message = "Tài khoản tạm thời bị khóa do nhập sai mật khẩu quá 5 lần. Vui lòng thử lại sau." });
+        }
+
+        // 3. Kiểm tra kích hoạt tài khoản
+        if (!user.IsActive)
+        {
+            return Json(new { success = false, message = "Tài khoản của bạn đã bị khóa hoặc vô hiệu hóa. Vui lòng liên hệ quản trị viên." });
+        }
+
+        // 4. Kiểm tra mật khẩu
+        bool isPasswordValid = _passwordService.VerifyPassword(model.Password, user.PasswordHash);
+
+        if (!isPasswordValid)
+        {
+            user.FailedLoginCount++;
+            if (user.FailedLoginCount >= 5)
+            {
+                user.LockoutEnd = DateTime.UtcNow.AddMinutes(15);
+            }
+            await _context.SaveChangesAsync();
+
+            if (user.LockoutEnd.HasValue && user.LockoutEnd.Value > DateTime.UtcNow)
+            {
+                return Json(new { success = false, message = "Tài khoản tạm thời bị khóa do nhập sai mật khẩu quá 5 lần. Vui lòng thử lại sau." });
+            }
+
+            return Json(new { success = false, message = "Tên đăng nhập/email hoặc mật khẩu không chính xác." });
+        }
+
+        // 5. Đăng nhập thành công -> Reset FailedLoginCount và LockoutEnd
+        user.FailedLoginCount = 0;
+        user.LockoutEnd = null;
+        user.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        // 6. Khởi tạo Claims
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+            new(ClaimTypes.Name, user.Username),
+            new(ClaimTypes.Email, user.Email),
+            new(ClaimTypes.Role, user.Role),
+            new("FullName", user.FullName ?? user.Username)
+        };
+
+        if (user.Role == "Employer" && user.Company != null)
+        {
+            claims.Add(new Claim("CompanyId", user.Company.CompanyId.ToString()));
+            claims.Add(new Claim("CompanyStatus", user.Company.Status));
+        }
+
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var principal = new ClaimsPrincipal(identity);
+
+        var authProperties = new AuthenticationProperties
+        {
+            IsPersistent = model.RememberMe,
+            ExpiresUtc = model.RememberMe ? DateTimeOffset.UtcNow.AddDays(30) : DateTimeOffset.UtcNow.AddHours(8)
+        };
+
+        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProperties);
+
+        // 7. Chống Open Redirect: chỉ nhận URL nội bộ, loại bỏ protocol-relative URL
+        string redirectUrl = "/";
+        if (!string.IsNullOrEmpty(model.ReturnUrl) &&
+            Url.IsLocalUrl(model.ReturnUrl) &&
+            !model.ReturnUrl.StartsWith("//") &&
+            !model.ReturnUrl.StartsWith("/\\"))
+        {
+            redirectUrl = model.ReturnUrl;
+        }
+        else if (user.Role == "SuperAdmin")
+        {
+            redirectUrl = "/Admin";
+        }
+
+        return Json(new { success = true, redirectUrl });
+    }
+
+    /// <summary>
+    /// Xử lý đăng ký ứng viên qua modal popup (AJAX JSON).
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RegisterModal(RegisterCandidateViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            var firstErr = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .FirstOrDefault() ?? "Dữ liệu đăng ký không hợp lệ.";
+            return Json(new { success = false, message = firstErr });
+        }
+
+        if (!_passwordService.ValidatePassword(model.Password, out var passErr))
+        {
+            return Json(new { success = false, message = passErr });
+        }
+
+        var normalizedUsername = model.Username.Trim().ToLower();
+        var normalizedEmail = model.Email.Trim().ToLower();
+
+        if (await _context.Users.AnyAsync(u => u.Username.ToLower() == normalizedUsername))
+        {
+            return Json(new { success = false, message = "Tên đăng nhập đã được sử dụng. Vui lòng chọn tên khác." });
+        }
+
+        if (await _context.Users.AnyAsync(u => u.Email.ToLower() == normalizedEmail))
+        {
+            return Json(new { success = false, message = "Địa chỉ email đã được đăng ký. Vui lòng sử dụng email khác." });
+        }
+
+        var user = new tblUser
+        {
+            Username = model.Username.Trim(),
+            Email = model.Email.Trim(),
+            FullName = model.FullName.Trim(),
+            Phone = model.Phone?.Trim(),
+            PasswordHash = _passwordService.HashPassword(model.Password),
+            Role = "Candidate",
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+
+        return Json(new { success = true, message = "Đăng ký tài khoản ứng viên thành công! Vui lòng đăng nhập." });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
     //  ĐĂNG XUẤT ─ Chỉ chấp nhận POST (AC-S1.8)
     // ═══════════════════════════════════════════════════════════════
 

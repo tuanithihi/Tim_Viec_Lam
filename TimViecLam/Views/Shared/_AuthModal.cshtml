@@ -1,0 +1,309 @@
+@* ── Auth Modal (Đăng nhập / Đăng ký Ứng viên Popup) ── *@
+<div class="modal fade" id="authModal" tabindex="-1" aria-labelledby="authModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+        <div class="modal-content shadow-lg" style="border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
+            <div class="modal-header border-0 pb-1 px-4 pt-4">
+                <ul class="nav nav-pills gap-1 me-auto" id="authTabList" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" data-auth-tab="login" type="button" role="tab" id="authTabLogin">
+                            <i class="bi bi-box-arrow-in-right me-1" aria-hidden="true"></i>Đăng nhập
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-auth-tab="register" type="button" role="tab" id="authTabRegister">
+                            <i class="bi bi-person-plus me-1" aria-hidden="true"></i>Đăng ký
+                        </button>
+                    </li>
+                </ul>
+                <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+
+            <div class="modal-body px-4 pb-4 pt-2">
+                <!-- Alert box for modal -->
+                <div id="authAlert" class="d-none alert py-2 small mb-3" role="alert"></div>
+
+                <!-- ── 1. Login Pane ──────────────────────────────── -->
+                <div id="loginPane">
+                    <p class="text-muted small mb-3">Chào mừng bạn trở lại! Vui lòng đăng nhập để tiếp tục.</p>
+                    <form id="loginForm" novalidate>
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="ReturnUrl" id="loginReturnUrl" value="" />
+
+                        <div class="mb-3">
+                            <label class="form-label" for="modalLoginUsername">Tên đăng nhập hoặc Email <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white text-muted"><i class="bi bi-person" aria-hidden="true"></i></span>
+                                <input type="text" name="UsernameOrEmail" id="modalLoginUsername" class="form-control"
+                                       placeholder="Tên đăng nhập hoặc email"
+                                       autocomplete="username" required />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="modalLoginPassword">Mật khẩu <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white text-muted"><i class="bi bi-lock" aria-hidden="true"></i></span>
+                                <input type="password" name="Password" id="modalLoginPassword" class="form-control"
+                                       placeholder="Nhập mật khẩu"
+                                       autocomplete="current-password" required />
+                                <button type="button" class="btn btn-outline-secondary" onclick="authTogglePwd(this)" aria-label="Hiện/ẩn mật khẩu">
+                                    <i class="bi bi-eye" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="RememberMe" value="true" id="modalRememberMe">
+                                <label class="form-check-label small text-muted" for="modalRememberMe">
+                                    Ghi nhớ đăng nhập
+                                </label>
+                            </div>
+                            <a href="/quen-mat-khau" class="small text-decoration-none" style="color: var(--brand-primary);">
+                                Quên mật khẩu?
+                            </a>
+                        </div>
+
+                        <div class="d-grid mb-3">
+                            <button type="submit" id="loginSubmitBtn" class="btn btn-brand">
+                                <i class="bi bi-box-arrow-in-right me-1" aria-hidden="true"></i>Đăng nhập
+                            </button>
+                        </div>
+
+                        <div class="text-center pt-2 border-top">
+                            <span class="small text-muted">Bạn là nhà tuyển dụng?</span>
+                            <a href="/dang-ky-nha-tuyen-dung" class="small fw-semibold ms-1" style="color: var(--brand-primary);">
+                                Đăng ký doanh nghiệp
+                            </a>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- ── 2. Register Candidate Pane ──────────────────── -->
+                <div id="registerPane" class="d-none">
+                    <p class="text-muted small mb-3">Tạo tài khoản ứng viên để tìm việc làm và ứng tuyển nhanh chóng.</p>
+                    <form id="registerForm" novalidate>
+                        @Html.AntiForgeryToken()
+                        <div class="row g-2">
+                            <div class="col-12">
+                                <label class="form-label" for="modalRegUsername">Tên đăng nhập <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white text-muted"><i class="bi bi-person" aria-hidden="true"></i></span>
+                                    <input type="text" name="Username" id="modalRegUsername" class="form-control"
+                                           placeholder="nguyen_van_a" autocomplete="username" required />
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="modalRegEmail">Email <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white text-muted"><i class="bi bi-envelope" aria-hidden="true"></i></span>
+                                    <input type="email" name="Email" id="modalRegEmail" class="form-control"
+                                           placeholder="email@domain.com" autocomplete="email" required />
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="modalRegFullName">Họ và tên <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white text-muted"><i class="bi bi-person-badge" aria-hidden="true"></i></span>
+                                    <input type="text" name="FullName" id="modalRegFullName" class="form-control"
+                                           placeholder="Nguyễn Văn A" autocomplete="name" required />
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="modalRegPhone">Số điện thoại</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white text-muted"><i class="bi bi-telephone" aria-hidden="true"></i></span>
+                                    <input type="tel" name="Phone" id="modalRegPhone" class="form-control"
+                                           placeholder="09xxxxxxxx" autocomplete="tel" />
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="modalRegPassword">Mật khẩu <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white text-muted"><i class="bi bi-lock" aria-hidden="true"></i></span>
+                                    <input type="password" name="Password" id="modalRegPassword" class="form-control"
+                                           placeholder="Tối thiểu 8 ký tự, có chữ và số"
+                                           autocomplete="new-password" required />
+                                    <button type="button" class="btn btn-outline-secondary" onclick="authTogglePwd(this)" aria-label="Hiện/ẩn mật khẩu">
+                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label" for="modalRegConfirmPassword">Xác nhận mật khẩu <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white text-muted"><i class="bi bi-lock-fill" aria-hidden="true"></i></span>
+                                    <input type="password" name="ConfirmPassword" id="modalRegConfirmPassword" class="form-control"
+                                           placeholder="Nhập lại mật khẩu"
+                                           autocomplete="new-password" required />
+                                    <button type="button" class="btn btn-outline-secondary" onclick="authTogglePwd(this)" aria-label="Hiện/ẩn mật khẩu">
+                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-12 mt-3">
+                                <button type="submit" id="registerSubmitBtn" class="btn btn-brand w-100">
+                                    <i class="bi bi-person-plus me-1" aria-hidden="true"></i>Đăng ký tài khoản ứng viên
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="text-center pt-3 mt-3 border-top">
+                            <span class="small text-muted">Bạn là nhà tuyển dụng?</span>
+                            <a href="/dang-ky-nha-tuyen-dung" class="small fw-semibold ms-1" style="color: var(--brand-primary);">
+                                Đăng ký doanh nghiệp
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    #authTabList .nav-link {
+        color: var(--gray-700);
+        font-weight: var(--font-medium);
+        border-radius: var(--radius-md);
+        padding: 6px 14px;
+        transition: all var(--transition-fast);
+        border: 1px solid transparent;
+    }
+    #authTabList .nav-link:hover:not(.active) {
+        background-color: var(--gray-100);
+        color: var(--brand-primary);
+    }
+    #authTabList .nav-link.active {
+        background-color: var(--brand-primary);
+        color: #ffffff;
+    }
+</style>
+
+<script>
+    function authShowAlert(type, msg) {
+        var el = document.getElementById('authAlert');
+        if (el) {
+            el.className = 'alert alert-' + type + ' py-2 small mb-3';
+            el.textContent = msg;
+            el.classList.remove('d-none');
+        }
+    }
+
+    function authClearAlert() {
+        var el = document.getElementById('authAlert');
+        if (el) {
+            el.className = 'd-none alert py-2 small mb-3';
+            el.textContent = '';
+        }
+    }
+
+    function authSwitchTab(tab) {
+        document.querySelectorAll('[data-auth-tab]').forEach(function(btn) {
+            btn.classList.toggle('active', btn.dataset.authTab === tab);
+        });
+        var loginPane = document.getElementById('loginPane');
+        var regPane = document.getElementById('registerPane');
+        if (loginPane) loginPane.classList.toggle('d-none', tab !== 'login');
+        if (regPane) regPane.classList.toggle('d-none', tab !== 'register');
+        authClearAlert();
+    }
+
+    function authTogglePwd(btn) {
+        var group = btn.closest('.input-group');
+        if (!group) return;
+        var input = group.querySelector('input');
+        var icon = btn.querySelector('i');
+        if (!input || !icon) return;
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'bi bi-eye-slash';
+        } else {
+            input.type = 'password';
+            icon.className = 'bi bi-eye';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var authModalEl = document.getElementById('authModal');
+        if (!authModalEl) return;
+
+        document.querySelectorAll('[data-auth-tab]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                authSwitchTab(this.dataset.authTab);
+            });
+        });
+
+        authModalEl.addEventListener('show.bs.modal', function(e) {
+            var tab = e.relatedTarget && e.relatedTarget.dataset.openTab;
+            authSwitchTab(tab === 'register' ? 'register' : 'login');
+            var loginForm = document.getElementById('loginForm');
+            var regForm = document.getElementById('registerForm');
+            if (loginForm) loginForm.reset();
+            if (regForm) regForm.reset();
+            authClearAlert();
+        });
+
+        var loginForm = document.getElementById('loginForm');
+        if (loginForm) {
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                authClearAlert();
+                var btn = document.getElementById('loginSubmitBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Đang đăng nhập...';
+
+                try {
+                    var res = await fetch('/Account/LoginModal', {
+                        method: 'POST',
+                        body: new FormData(this)
+                    });
+                    var data = await res.json();
+                    if (data.success) {
+                        window.location.href = data.redirectUrl || window.location.href;
+                    } else {
+                        authShowAlert('danger', data.message || 'Tên đăng nhập hoặc mật khẩu không chính xác.');
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1" aria-hidden="true"></i>Đăng nhập';
+                    }
+                } catch {
+                    authShowAlert('danger', 'Đã xảy ra lỗi kết nối. Vui lòng thử lại.');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1" aria-hidden="true"></i>Đăng nhập';
+                }
+            });
+        }
+
+        var regForm = document.getElementById('registerForm');
+        if (regForm) {
+            regForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                authClearAlert();
+                var btn = document.getElementById('registerSubmitBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Đang đăng ký...';
+
+                try {
+                    var res = await fetch('/Account/RegisterModal', {
+                        method: 'POST',
+                        body: new FormData(this)
+                    });
+                    var data = await res.json();
+                    if (data.success) {
+                        authShowAlert('success', data.message || 'Đăng ký thành công!');
+                        setTimeout(function() {
+                            authSwitchTab('login');
+                        }, 1200);
+                    } else {
+                        authShowAlert('danger', data.message || 'Đăng ký không thành công.');
+                    }
+                } catch {
+                    authShowAlert('danger', 'Đã xảy ra lỗi kết nối. Vui lòng thử lại.');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-person-plus me-1" aria-hidden="true"></i>Đăng ký tài khoản ứng viên';
+                }
+            });
+        }
+    });
+</script>

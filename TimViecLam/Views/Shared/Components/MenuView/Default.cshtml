@@ -47,11 +47,13 @@
 
                 @if (!isLoggedIn)
                 {
-                    <a href="/dang-nhap" class="btn btn-neutral btn-sm d-none d-md-inline-flex" id="btnLogin">
+                    <a href="/dang-nhap" class="btn btn-neutral btn-sm d-none d-md-inline-flex" id="btnLogin"
+                       data-bs-toggle="modal" data-bs-target="#authModal" data-open-tab="login">
                         <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
                         Đăng nhập
                     </a>
-                    <a href="/dang-ky" class="btn-brand btn btn-sm d-none d-md-inline-flex" id="btnRegister">
+                    <a href="/dang-ky" class="btn-brand btn btn-sm d-none d-md-inline-flex" id="btnRegister"
+                       data-bs-toggle="modal" data-bs-target="#authModal" data-open-tab="register">
                         <i class="bi bi-person-plus" aria-hidden="true"></i>
                         Đăng ký
                     </a>
@@ -133,8 +135,10 @@
                 @if (!isLoggedIn)
                 {
                     <li role="listitem" class="mt-2 pt-2 border-top d-flex gap-2 px-2">
-                        <a href="/dang-nhap" class="btn btn-neutral btn-sm flex-fill" id="btnLoginMobile">Đăng nhập</a>
-                        <a href="/dang-ky" class="btn-brand btn btn-sm flex-fill" id="btnRegisterMobile">Đăng ký</a>
+                        <a href="/dang-nhap" class="btn btn-neutral btn-sm flex-fill" id="btnLoginMobile"
+                           data-bs-toggle="modal" data-bs-target="#authModal" data-open-tab="login">Đăng nhập</a>
+                        <a href="/dang-ky" class="btn-brand btn btn-sm flex-fill" id="btnRegisterMobile"
+                           data-bs-toggle="modal" data-bs-target="#authModal" data-open-tab="register">Đăng ký</a>
                     </li>
                 }
                 else
