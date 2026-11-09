@@ -155,14 +155,14 @@ public class EmployerController : Controller
     }
 
     /// <summary>
-    /// Endpoint đăng tin mẫu được bảo vệ bởi chính sách ApprovedEmployer (chỉ công ty đã duyệt mới được truy cập).
+    /// Chuyển hướng đến trang đăng tin tuyển dụng chính thức.
     /// GET /nha-tuyen-dung/dang-tin
     /// </summary>
     [Authorize(Policy = "ApprovedEmployer")]
     [HttpGet("dang-tin")]
     public IActionResult CreateJob()
     {
-        return View();
+        return RedirectToAction("Create", "EmployerJob");
     }
 }
 

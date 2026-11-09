@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using TimViecLam.Areas.Admin.Data;
+using TimViecLam.Models;
 using TimViecLam.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -129,6 +130,9 @@ builder.Services.AddHttpContextAccessor();
 // ── Health Check ──────────────────────────────────────────────────────
 builder.Services.AddHealthChecks();
 
+// ── Cấu hình ListingSettings ──────────────────────────────────────────
+builder.Services.Configure<ListingSettings>(builder.Configuration.GetSection("ListingSettings"));
+
 // ── Services ──────────────────────────────────────────────────────────
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
@@ -139,6 +143,10 @@ builder.Services.AddScoped<IFileUploadService, FileUploadService>();
 builder.Services.AddHttpClient<INominatimGeocodeService, NominatimGeocodeService>();
 builder.Services.AddScoped<ICompanyService, CompanyService>();
 builder.Services.AddScoped<IWorkplaceService, WorkplaceService>();
+builder.Services.AddSingleton<IHtmlSanitizerService, HtmlSanitizerService>();
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+builder.Services.AddScoped<IJobManagementService, JobManagementService>();
+builder.Services.AddScoped<IJobModerationService, JobModerationService>();
 
 var app = builder.Build();
 

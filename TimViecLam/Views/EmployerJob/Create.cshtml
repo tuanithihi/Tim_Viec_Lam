@@ -1,0 +1,323 @@
+@model TimViecLam.Models.ViewModels.JobInputModel
+@{
+    ViewData["Title"] = "Đăng tin tuyển dụng mới";
+    var categories = ViewBag.Categories as SelectList;
+    var jobTypes = ViewBag.JobTypes as SelectList;
+    var workplaces = ViewBag.Workplaces as SelectList;
+    var allSkills = ViewBag.AllSkills as List<TimViecLam.Models.tblSkill> ?? new();
+    var allBenefits = ViewBag.AllBenefits as List<TimViecLam.Models.tblBenefit> ?? new();
+
+    string minDate = DateTime.Today.ToString("yyyy-MM-dd");
+    string maxDate = DateTime.Today.AddDays(90).ToString("yyyy-MM-dd");
+}
+
+<div class="container-xl py-4">
+    <div class="mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1 text-xs">
+                <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted">Trang chủ</a></li>
+                <li class="breadcrumb-item"><a href="/nha-tuyen-dung/tin-tuyen-dung" class="text-decoration-none text-muted">Tin tuyển dụng</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Đăng tin mới</li>
+            </ol>
+        </nav>
+        <h1 class="h3 fw-bold text-dark mb-0">Đăng Tin Tuyển Dụng Mới</h1>
+        <p class="text-muted text-sm mt-1">Điền đầy đủ thông tin vị trí để tiếp cận đúng ứng viên tiềm năng.</p>
+    </div>
+
+    <form asp-action="Create" method="post" id="jobForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="IsDraft" id="inputIsDraft" value="false" />
+
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger text-sm mb-4"></div>
+
+        <div class="row g-4">
+            <!-- Cột trái: Thông tin chính -->
+            <div class="col-12 col-lg-8">
+                <!-- 1. Thông tin chung -->
+                <div class="card border shadow-sm mb-4">
+                    <div class="card-header bg-white py-3 border-bottom">
+                        <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-briefcase me-2 text-primary"></i>1. Thông tin vị trí tuyển dụng</h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label small fw-semibold">Tiêu đề tin tuyển dụng <span class="text-danger">*</span></label>
+                            <input asp-for="Title" class="form-control" placeholder="Ví dụ: Senior .NET Backend Developer, Kế toán trưởng..." />
+                            <span asp-validation-for="Title" class="text-danger text-xs"></span>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-12 col-md-6">
+                                <label asp-for="CategoryId" class="form-label small fw-semibold">Ngành nghề <span class="text-danger">*</span></label>
+                                <select asp-for="CategoryId" asp-items="categories" class="form-select">
+                                    <option value="">-- Chọn ngành nghề --</option>
+                                </select>
+                                <span asp-validation-for="CategoryId" class="text-danger text-xs"></span>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label asp-for="JobTypeId" class="form-label small fw-semibold">Hình thức làm việc <span class="text-danger">*</span></label>
+                                <select asp-for="JobTypeId" asp-items="jobTypes" class="form-select">
+                                    <option value="">-- Chọn hình thức --</option>
+                                </select>
+                                <span asp-validation-for="JobTypeId" class="text-danger text-xs"></span>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-12 col-md-6">
+                                <label asp-for="WorkMode" class="form-label small fw-semibold">Chế độ làm việc <span class="text-danger">*</span></label>
+                                <select asp-for="WorkMode" id="selectWorkMode" class="form-select">
+                                    <option value="OnSite">Làm việc trực tiếp tại văn phòng (OnSite)</option>
+                                    <option value="Hybrid">Linh hoạt kết hợp (Hybrid)</option>
+                                    <option value="Remote">Làm việc từ xa 100% (Remote)</option>
+                                </select>
+                                <span asp-validation-for="WorkMode" class="text-danger text-xs"></span>
+                            </div>
+                            <div class="col-12 col-md-6" id="workplaceContainer">
+                                <label asp-for="WorkplaceId" class="form-label small fw-semibold">Địa điểm / Chi nhánh làm việc</label>
+                                <select asp-for="WorkplaceId" asp-items="workplaces" class="form-select" id="selectWorkplace">
+                                    <option value="">-- Chọn địa điểm của công ty --</option>
+                                </select>
+                                <div class="text-xs text-muted mt-1">
+                                    <a href="/nha-tuyen-dung/dia-diem/them" target="_blank" class="text-decoration-none">
+                                        <i class="bi bi-plus-circle me-1"></i>Thêm chi nhánh mới
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-12 col-md-4">
+                                <label asp-for="ExperienceLevel" class="form-label small fw-semibold">Kinh nghiệm yêu cầu <span class="text-danger">*</span></label>
+                                <select asp-for="ExperienceLevel" class="form-select">
+                                    <option value="Không yêu cầu">Không yêu cầu</option>
+                                    <option value="Dưới 1 năm">Dưới 1 năm</option>
+                                    <option value="1-2 năm">1 - 2 năm</option>
+                                    <option value="2-5 năm">2 - 5 năm</option>
+                                    <option value="Trên 5 năm">Trên 5 năm</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label asp-for="EducationLevel" class="form-label small fw-semibold">Trình độ học vấn <span class="text-danger">*</span></label>
+                                <select asp-for="EducationLevel" class="form-select">
+                                    <option value="Không yêu cầu">Không yêu cầu</option>
+                                    <option value="Trung cấp">Trung cấp</option>
+                                    <option value="Cao đẳng">Cao đẳng</option>
+                                    <option value="Đại học">Đại học</option>
+                                    <option value="Sau đại học">Sau đại học</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label asp-for="Headcount" class="form-label small fw-semibold">Số lượng tuyển <span class="text-danger">*</span></label>
+                                <input asp-for="Headcount" class="form-control" type="number" min="1" max="1000" />
+                                <span asp-validation-for="Headcount" class="text-danger text-xs"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Mức lương & Hạn nộp -->
+                <div class="card border shadow-sm mb-4">
+                    <div class="card-header bg-white py-3 border-bottom">
+                        <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-cash-stack me-2 text-primary"></i>2. Mức lương & Hạn nộp hồ sơ</h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="form-check form-switch mb-3">
+                            <input asp-for="IsSalaryNegotiable" class="form-check-input" type="checkbox" id="checkNegotiable" />
+                            <label class="form-check-label small fw-semibold" for="checkNegotiable">
+                                Mức lương Thỏa thuận (Không công khai khoảng lương cụ thể)
+                            </label>
+                        </div>
+
+                        <div class="row g-3 mb-3" id="salaryRangeContainer">
+                            <div class="col-12 col-md-5">
+                                <label asp-for="SalaryMin" class="form-label small fw-semibold">Lương tối thiểu</label>
+                                <input asp-for="SalaryMin" id="inputSalaryMin" class="form-control" type="number" step="500000" placeholder="Ví dụ: 15000000" />
+                                <span asp-validation-for="SalaryMin" class="text-danger text-xs"></span>
+                            </div>
+                            <div class="col-12 col-md-5">
+                                <label asp-for="SalaryMax" class="form-label small fw-semibold">Lương tối đa</label>
+                                <input asp-for="SalaryMax" id="inputSalaryMax" class="form-control" type="number" step="500000" placeholder="Ví dụ: 25000000" />
+                                <span asp-validation-for="SalaryMax" class="text-danger text-xs"></span>
+                            </div>
+                            <div class="col-12 col-md-2">
+                                <label asp-for="SalaryUnit" class="form-label small fw-semibold">Đơn vị</label>
+                                <select asp-for="SalaryUnit" class="form-select">
+                                    <option value="VND">VND</option>
+                                    <option value="USD">USD</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ExpiresAt" class="form-label small fw-semibold">Hạn nộp hồ sơ <span class="text-danger">*</span></label>
+                            <input asp-for="ExpiresAt" class="form-control" type="date" min="@minDate" max="@maxDate" />
+                            <div class="text-xs text-muted mt-1">Hạn nộp tối đa trong vòng 90 ngày kể từ hôm nay.</div>
+                            <span asp-validation-for="ExpiresAt" class="text-danger text-xs"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Mô tả & Yêu cầu công việc -->
+                <div class="card border shadow-sm mb-4">
+                    <div class="card-header bg-white py-3 border-bottom">
+                        <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-file-earmark-text me-2 text-primary"></i>3. Chi tiết công việc</h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label small fw-semibold">Mô tả công việc <span class="text-danger">*</span></label>
+                            <textarea asp-for="Description" class="form-control" rows="8" placeholder="Nêu rõ trách nhiệm công việc, các nhiệm vụ hàng ngày..."></textarea>
+                            <span asp-validation-for="Description" class="text-danger text-xs"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Requirements" class="form-label small fw-semibold">Yêu cầu ứng viên</label>
+                            <textarea asp-for="Requirements" class="form-control" rows="6" placeholder="Kỹ năng chuyên môn, kinh nghiệm thực tế, thái độ làm việc..."></textarea>
+                            <span asp-validation-for="Requirements" class="text-danger text-xs"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cột phải: Kỹ năng, Phúc lợi & Thao tác lưu -->
+            <div class="col-12 col-lg-4">
+                <!-- 4. Kỹ năng yêu cầu -->
+                <div class="card border shadow-sm mb-4">
+                    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-award me-2 text-primary"></i>Kỹ năng yêu cầu</h6>
+                        <span class="text-xs text-muted" id="skillCounter">Tối đa 15</span>
+                    </div>
+                    <div class="card-body p-3" style="max-height: 280px; overflow-y: auto;">
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var sk in allSkills)
+                            {
+                                <div class="form-check form-check-inline border rounded px-2 py-1 m-0 bg-light">
+                                    <input class="form-check-input skill-checkbox" type="checkbox" name="SkillIds" value="@sk.SkillId" id="skill_@sk.SkillId"
+                                           @(Model.SkillIds.Contains(sk.SkillId) ? "checked" : "") />
+                                    <label class="form-check-label text-xs fw-semibold" for="skill_@sk.SkillId">@sk.Name</label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Chế độ phúc lợi -->
+                <div class="card border shadow-sm mb-4">
+                    <div class="card-header bg-white py-3 border-bottom">
+                        <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-gift me-2 text-primary"></i>Chế độ đãi ngộ & Phúc lợi</h6>
+                    </div>
+                    <div class="card-body p-3" style="max-height: 250px; overflow-y: auto;">
+                        <div class="d-flex flex-column gap-2">
+                            @foreach (var b in allBenefits)
+                            {
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="BenefitIds" value="@b.BenefitId" id="benefit_@b.BenefitId"
+                                           @(Model.BenefitIds.Contains(b.BenefitId) ? "checked" : "") />
+                                    <label class="form-check-label text-xs" for="benefit_@b.BenefitId">
+                                        @if (!string.IsNullOrEmpty(b.Icon))
+                                        {
+                                            <i class="@b.Icon me-1 text-primary"></i>
+                                        }
+                                        @b.Name
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. Nút gửi và lưu -->
+                <div class="card border shadow-sm">
+                    <div class="card-body p-3 d-flex flex-column gap-2">
+                        <button type="button" id="btnSubmitApproval" class="btn btn-brand w-100 py-2">
+                            <i class="bi bi-send me-1"></i>Gửi phê duyệt ngay
+                        </button>
+                        <button type="button" id="btnSaveDraft" class="btn btn-neutral w-100 py-2">
+                            <i class="bi bi-pencil-square me-1"></i>Lưu bản nháp (Draft)
+                        </button>
+                        <a href="/nha-tuyen-dung/tin-tuyen-dung" class="btn btn-light w-100 btn-sm text-muted mt-1">
+                            Hủy bỏ
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const checkNegotiable = document.getElementById('checkNegotiable');
+            const salaryContainer = document.getElementById('salaryRangeContainer');
+            const inputSalaryMin = document.getElementById('inputSalaryMin');
+            const inputSalaryMax = document.getElementById('inputSalaryMax');
+
+            function toggleSalary() {
+                if (checkNegotiable && salaryContainer) {
+                    if (checkNegotiable.checked) {
+                        salaryContainer.style.opacity = '0.5';
+                        if (inputSalaryMin) inputSalaryMin.disabled = true;
+                        if (inputSalaryMax) inputSalaryMax.disabled = true;
+                    } else {
+                        salaryContainer.style.opacity = '1';
+                        if (inputSalaryMin) inputSalaryMin.disabled = false;
+                        if (inputSalaryMax) inputSalaryMax.disabled = false;
+                    }
+                }
+            }
+
+            if (checkNegotiable) {
+                checkNegotiable.addEventListener('change', toggleSalary);
+                toggleSalary();
+            }
+
+            // Đếm kỹ năng tối đa 15
+            const skillBoxes = document.querySelectorAll('.skill-checkbox');
+            const skillCounter = document.getElementById('skillCounter');
+
+            function updateSkillCount() {
+                let count = 0;
+                skillBoxes.forEach(cb => { if (cb.checked) count++; });
+                if (skillCounter) {
+                    skillCounter.textContent = `Đã chọn: ${count} / 15`;
+                    skillCounter.className = count > 15 ? 'text-xs text-danger fw-bold' : 'text-xs text-muted';
+                }
+            }
+
+            skillBoxes.forEach(cb => {
+                cb.addEventListener('change', function () {
+                    let count = 0;
+                    skillBoxes.forEach(b => { if (b.checked) count++; });
+                    if (count > 15) {
+                        alert('Bạn chỉ được chọn tối đa 15 kỹ năng cho mỗi tin tuyển dụng.');
+                        this.checked = false;
+                    }
+                    updateSkillCount();
+                });
+            });
+            updateSkillCount();
+
+            // Xử lý 2 nút bấm
+            const form = document.getElementById('jobForm');
+            const inputIsDraft = document.getElementById('inputIsDraft');
+            const btnSubmitApproval = document.getElementById('btnSubmitApproval');
+            const btnSaveDraft = document.getElementById('btnSaveDraft');
+
+            if (btnSubmitApproval) {
+                btnSubmitApproval.addEventListener('click', function () {
+                    if (inputIsDraft) inputIsDraft.value = 'false';
+                    form.submit();
+                });
+            }
+
+            if (btnSaveDraft) {
+                btnSaveDraft.addEventListener('click', function () {
+                    if (inputIsDraft) inputIsDraft.value = 'true';
+                    form.submit();
+                });
+            }
+        });
+    </script>
+}
+

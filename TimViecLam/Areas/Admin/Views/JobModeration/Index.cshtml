@@ -1,0 +1,402 @@
+@model TimViecLam.Models.ViewModels.JobModerationListViewModel
+@{
+    ViewData["Title"] = "Kiểm duyệt tin tuyển dụng";
+    Layout = "~/Areas/Admin/Views/Shared/_LayoutAdmin.cshtml";
+    string currentStatus = Model.Filter.Status ?? "Pending";
+}
+
+<div class="container-fluid px-0">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h1 class="h3 fw-bold text-dark mb-0">Kiểm Duyệt Tin Tuyển Dụng</h1>
+            <p class="text-muted text-sm mt-1">Xét duyệt các tin tuyển dụng do doanh nghiệp gửi lên trước khi xuất bản ra cộng đồng ứng viên.</p>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+        </div>
+    }
+
+    <!-- Tab chuyển đổi trạng thái -->
+    <div class="card border shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom p-0">
+            <ul class="nav nav-tabs border-0 px-3 pt-2" style="gap: 4px;">
+                <li class="nav-item">
+                    <a class="nav-link @(currentStatus == "Pending" ? "active fw-bold text-warning" : "text-muted")"
+                       href="/admin/duyet-tin?Status=Pending">
+                        <i class="bi bi-clock-history me-1"></i>Chờ duyệt
+                        <span class="badge bg-warning text-dark ms-1">@Model.PendingCount</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentStatus == "All" ? "active fw-bold text-primary" : "text-muted")"
+                       href="/admin/duyet-tin?Status=All">
+                        Tất cả
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentStatus == "Published" ? "active fw-bold text-success" : "text-muted")"
+                       href="/admin/duyet-tin?Status=Published">
+                        Đang xuất bản
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentStatus == "Rejected" ? "active fw-bold text-danger" : "text-muted")"
+                       href="/admin/duyet-tin?Status=Rejected">
+                        Bị từ chối
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(currentStatus == "Closed" ? "active fw-bold text-dark" : "text-muted")"
+                       href="/admin/duyet-tin?Status=Closed">
+                        Đã đóng / Gỡ
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body p-3">
+            <form method="get" action="/admin/duyet-tin" class="row g-2 align-items-center">
+                <input type="hidden" name="Status" value="@currentStatus" />
+                <div class="col-12 col-md-6 col-lg-5">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" name="Keyword" value="@Model.Filter.Keyword" class="form-control" placeholder="Tìm theo tiêu đề tin hoặc tên công ty..." />
+                        @if (!string.IsNullOrWhiteSpace(Model.Filter.Keyword))
+                        {
+                            <a href="/admin/duyet-tin?Status=@currentStatus" class="btn btn-outline-secondary" title="Xóa tìm kiếm">
+                                <i class="bi bi-x-lg"></i>
+                            </a>
+                        }
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 col-lg-3">
+                    <button type="submit" class="btn btn-neutral btn-sm px-3">
+                        <i class="bi bi-filter me-1"></i>Lọc
+                    </button>
+                </div>
+                <div class="col-6 col-md-3 col-lg-4 text-end text-xs text-muted">
+                    Tìm thấy <strong>@Model.TotalItems</strong> tin tuyển dụng
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Form duyệt hàng loạt -->
+    <form method="post" action="/admin/duyet-tin/duyet-hang-loat" id="batchApproveForm">
+        @Html.AntiForgeryToken()
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                @if (currentStatus == "Pending" || currentStatus == "All")
+                {
+                    <button type="submit" class="btn btn-success btn-sm shadow-sm" id="btnBatchApprove" onclick="return confirm('Bạn có chắc chắn muốn phê duyệt tất cả các tin đã chọn? (Hệ thống sẽ chỉ duyệt các tin đang ở trạng thái Pending)');">
+                        <i class="bi bi-check2-all me-1"></i>Duyệt hàng loạt tin đã chọn
+                    </button>
+                }
+            </div>
+            <span class="text-xs text-muted" id="selectedCountText">Đã chọn: 0 tin</span>
+        </div>
+
+        <div class="card border shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-xs text-uppercase">
+                        <tr>
+                            <th style="width: 40px;" class="text-center">
+                                <input type="checkbox" class="form-check-input" id="checkAllJobs" />
+                            </th>
+                            <th style="min-width: 200px;">Công ty</th>
+                            <th style="min-width: 250px;">Tiêu đề tin tuyển dụng</th>
+                            <th>Ngành / Hình thức</th>
+                            <th>Mức lương</th>
+                            <th>Ngày gửi / Hạn nộp</th>
+                            <th>Trạng thái</th>
+                            <th class="text-end" style="min-width: 170px;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        @if (Model.Jobs.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center py-5 text-muted">
+                                    <i class="bi bi-clipboard-check fs-1 d-block mb-2 text-secondary"></i>
+                                    Không có tin tuyển dụng nào trong mục này.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var job in Model.Jobs)
+                            {
+                                <tr>
+                                    <td class="text-center">
+                                        @if (job.ApprovalStatus == "Pending")
+                                        {
+                                            <input type="checkbox" name="jobIds" value="@job.JobId" class="form-check-input job-checkbox" />
+                                        }
+                                        else
+                                        {
+                                            <input type="checkbox" disabled class="form-check-input" title="Chỉ tin Pending mới có thể duyệt" />
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            @if (!string.IsNullOrEmpty(job.CompanyLogo))
+                                            {
+                                                <img src="@job.CompanyLogo" alt="@job.CompanyName" class="rounded border" style="width: 36px; height: 36px; object-fit: contain;" />
+                                            }
+                                            else
+                                            {
+                                                <div class="rounded border bg-light d-flex align-items-center justify-content-center text-muted" style="width: 36px; height: 36px;">
+                                                    <i class="bi bi-building"></i>
+                                                </div>
+                                            }
+                                            <div>
+                                                <div class="fw-semibold text-dark">@job.CompanyName</div>
+                                                <span class="badge @(job.CompanyStatus == "Approved" ? "bg-success" : "bg-warning text-dark") text-xs">
+                                                    @job.CompanyStatus
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <a href="/admin/duyet-tin/chi-tiet/@job.JobId" class="fw-bold text-dark text-decoration-none hover-primary">
+                                            @job.Title
+                                        </a>
+                                        <div class="text-xs text-muted mt-1">
+                                            <i class="bi bi-geo-alt me-1"></i>@job.WorkplaceName (@job.WorkMode)
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(job.RejectReason))
+                                        {
+                                            <div class="text-xs text-danger mt-1">
+                                                <i class="bi bi-info-circle me-1"></i>Lý do: @job.RejectReason
+                                            </div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div>@job.CategoryName</div>
+                                        <span class="badge bg-light text-dark border text-xs">@job.JobTypeName</span>
+                                    </td>
+                                    <td>
+                                        <span class="fw-semibold text-danger">@job.SalaryDisplay</span>
+                                    </td>
+                                    <td>
+                                        <div class="text-xs text-muted">Gửi: @job.CreatedAt.ToString("dd/MM/yyyy")</div>
+                                        <div class="text-xs fw-semibold">Hạn: @job.ExpiresAt.ToString("dd/MM/yyyy")</div>
+                                    </td>
+                                    <td>
+                                        @switch (job.ApprovalStatus)
+                                        {
+                                            case "Published":
+                                                <span class="badge bg-success">Xuất bản</span>
+                                                break;
+                                            case "Pending":
+                                                <span class="badge bg-warning text-dark">Chờ duyệt</span>
+                                                break;
+                                            case "Draft":
+                                                <span class="badge bg-secondary">Nháp</span>
+                                                break;
+                                            case "Rejected":
+                                                <span class="badge bg-danger">Từ chối</span>
+                                                break;
+                                            case "Closed":
+                                                <span class="badge bg-dark">Đã đóng</span>
+                                                break;
+                                            default:
+                                                <span class="badge bg-secondary">@job.ApprovalStatus</span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="/admin/duyet-tin/chi-tiet/@job.JobId" class="btn btn-neutral" title="Xem chi tiết">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+
+                                            @if (job.ApprovalStatus == "Pending")
+                                            {
+                                                <button type="button" class="btn btn-success" title="Phê duyệt tin này"
+                                                        onclick="submitSingleApprove(@job.JobId)">
+                                                    <i class="bi bi-check-lg"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-danger" title="Từ chối tin này"
+                                                        onclick="openRejectModal(@job.JobId, '@Html.Raw(Html.Encode(job.Title))')">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            }
+
+                                            @if (job.ApprovalStatus == "Published")
+                                            {
+                                                <button type="button" class="btn btn-warning" title="Gỡ tin tuyển dụng"
+                                                        onclick="openUnpublishModal(@job.JobId, '@Html.Raw(Html.Encode(job.Title))')">
+                                                    <i class="bi bi-arrow-down-circle"></i>
+                                                </button>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Phân trang -->
+            @if (Model.TotalPages > 1)
+            {
+                <div class="card-footer bg-white border-top py-3 d-flex justify-content-between align-items-center">
+                    <span class="text-xs text-muted">
+                        Trang <strong>@Model.PageIndex</strong> / <strong>@Model.TotalPages</strong>
+                    </span>
+                    <nav aria-label="Phân trang kiểm duyệt tin">
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item @(Model.PageIndex <= 1 ? "disabled" : "")">
+                                <a class="page-link" href="/admin/duyet-tin?Status=@currentStatus&Keyword=@Model.Filter.Keyword&PageIndex=@(Model.PageIndex - 1)">
+                                    Trước
+                                </a>
+                            </li>
+                            @for (int p = 1; p <= Model.TotalPages; p++)
+                            {
+                                <li class="page-item @(p == Model.PageIndex ? "active" : "")">
+                                    <a class="page-link" href="/admin/duyet-tin?Status=@currentStatus&Keyword=@Model.Filter.Keyword&PageIndex=@p">
+                                        @p
+                                    </a>
+                                </li>
+                            }
+                            <li class="page-item @(Model.PageIndex >= Model.TotalPages ? "disabled" : "")">
+                                <a class="page-link" href="/admin/duyet-tin?Status=@currentStatus&Keyword=@Model.Filter.Keyword&PageIndex=@(Model.PageIndex + 1)">
+                                    Sau
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            }
+        </div>
+    </form>
+</div>
+
+<!-- Modal Từ chối tin -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="post" id="rejectForm">
+            @Html.AntiForgeryToken()
+            <div class="modal-content">
+                <div class="modal-header border-bottom py-3">
+                    <h6 class="modal-title fw-bold text-danger" id="rejectModalLabel"><i class="bi bi-x-circle me-2"></i>Từ chối tin tuyển dụng</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-sm mb-2">Bạn đang từ chối duyệt tin: <strong id="rejectJobTitle"></strong></p>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Lý do từ chối (bắt buộc) <span class="text-danger">*</span></label>
+                        <textarea name="reason" id="rejectReason" class="form-control" rows="3" placeholder="Nhập lý do chi tiết để thông báo cho Nhà tuyển dụng..." required minlength="5"></textarea>
+                        <div class="text-xs text-muted mt-1">Lý do sẽ được gửi đến bảng điều khiển của Nhà tuyển dụng.</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top py-2">
+                    <button type="button" class="btn btn-neutral btn-sm" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger btn-sm">Xác nhận Từ chối</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Gỡ tin -->
+<div class="modal fade" id="unpublishModal" tabindex="-1" aria-labelledby="unpublishModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="post" id="unpublishForm">
+            @Html.AntiForgeryToken()
+            <div class="modal-content">
+                <div class="modal-header border-bottom py-3">
+                    <h6 class="modal-title fw-bold text-warning" id="unpublishModalLabel"><i class="bi bi-arrow-down-circle me-2"></i>Gỡ tin tuyển dụng</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-sm mb-2">Bạn đang gỡ tin tuyển dụng đang xuất bản: <strong id="unpublishJobTitle"></strong></p>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Lý do gỡ tin (bắt buộc) <span class="text-danger">*</span></label>
+                        <textarea name="reason" id="unpublishReason" class="form-control" rows="3" placeholder="Nhập lý do gỡ tin (vi phạm điều khoản, thông tin sai lệch...)" required minlength="5"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top py-2">
+                    <button type="button" class="btn btn-neutral btn-sm" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-warning btn-sm">Xác nhận Gỡ tin</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Form ẩn duyệt đơn lẻ -->
+<form method="post" id="singleApproveForm" style="display:none;">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script>
+        // Check All
+        const checkAll = document.getElementById('checkAllJobs');
+        const checkboxes = document.querySelectorAll('.job-checkbox');
+        const selectedText = document.getElementById('selectedCountText');
+
+        function updateSelectedCount() {
+            let count = 0;
+            checkboxes.forEach(cb => { if (cb.checked) count++; });
+            if (selectedText) selectedText.textContent = `Đã chọn: ${count} tin`;
+        }
+
+        if (checkAll) {
+            checkAll.addEventListener('change', function () {
+                checkboxes.forEach(cb => cb.checked = this.checked);
+                updateSelectedCount();
+            });
+        }
+
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', function () {
+                updateSelectedCount();
+                if (!this.checked && checkAll) checkAll.checked = false;
+            });
+        });
+
+        // Phê duyệt đơn lẻ
+        function submitSingleApprove(jobId) {
+            if (confirm('Bạn có chắc chắn muốn phê duyệt và xuất bản tin tuyển dụng này?')) {
+                const form = document.getElementById('singleApproveForm');
+                form.action = `/admin/duyet-tin/duyet/${jobId}`;
+                form.submit();
+            }
+        }
+
+        // Modal từ chối
+        function openRejectModal(jobId, title) {
+            document.getElementById('rejectJobTitle').textContent = title;
+            document.getElementById('rejectForm').action = `/admin/duyet-tin/tu-choi/${jobId}`;
+            document.getElementById('rejectReason').value = '';
+            new bootstrap.Modal(document.getElementById('rejectModal')).show();
+        }
+
+        // Modal gỡ tin
+        function openUnpublishModal(jobId, title) {
+            document.getElementById('unpublishJobTitle').textContent = title;
+            document.getElementById('unpublishForm').action = `/admin/duyet-tin/go-tin/${jobId}`;
+            document.getElementById('unpublishReason').value = '';
+            new bootstrap.Modal(document.getElementById('unpublishModal')).show();
+        }
+    </script>
+}
+

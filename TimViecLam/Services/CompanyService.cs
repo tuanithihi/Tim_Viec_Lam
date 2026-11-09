@@ -15,15 +15,18 @@ public class CompanyService : ICompanyService
 {
     private readonly DataContext _context;
     private readonly IFileUploadService _fileUploadService;
+    private readonly IAuditLogService _auditLogService;
     private readonly ILogger<CompanyService> _logger;
 
     public CompanyService(
         DataContext context,
         IFileUploadService fileUploadService,
+        IAuditLogService auditLogService,
         ILogger<CompanyService> logger)
     {
         _context = context;
         _fileUploadService = fileUploadService;
+        _auditLogService = auditLogService;
         _logger = logger;
     }
 
@@ -126,6 +129,7 @@ public class CompanyService : ICompanyService
         company.UpdatedAt = DateTime.Now;
 
         await _context.SaveChangesAsync();
+        await _auditLogService.LogAsync(company.UserId, "UpdateCompanyProfile", "tblCompany", company.CompanyId.ToString(), "Cập nhật hồ sơ công ty");
         return (true, "Cập nhật hồ sơ công ty thành công.");
     }
 
@@ -259,6 +263,7 @@ public class CompanyService : ICompanyService
         company.UpdatedAt = DateTime.Now;
 
         await _context.SaveChangesAsync();
+        await _auditLogService.LogAsync(null, "ApproveCompany", "tblCompany", companyId.ToString(), "Phê duyệt hồ sơ công ty");
         _logger.LogInformation("SuperAdmin đã duyệt công ty {CompanyId} ({Name})", company.CompanyId, company.Name);
         return (true, "Đã phê duyệt công ty thành công.");
     }
@@ -278,6 +283,7 @@ public class CompanyService : ICompanyService
         company.UpdatedAt = DateTime.Now;
 
         await _context.SaveChangesAsync();
+        await _auditLogService.LogAsync(null, "RejectCompany", "tblCompany", companyId.ToString(), reason.Trim());
         _logger.LogInformation("SuperAdmin đã từ chối công ty {CompanyId} ({Name}) với lý do: {Reason}", company.CompanyId, company.Name, reason);
         return (true, "Đã từ chối công ty.");
     }
@@ -297,6 +303,7 @@ public class CompanyService : ICompanyService
         company.UpdatedAt = DateTime.Now;
 
         await _context.SaveChangesAsync();
+        await _auditLogService.LogAsync(null, "SuspendCompany", "tblCompany", companyId.ToString(), reason.Trim());
         _logger.LogInformation("SuperAdmin đã tạm khóa công ty {CompanyId} ({Name}) với lý do: {Reason}", company.CompanyId, company.Name, reason);
         return (true, "Đã tạm khóa công ty.");
     }
@@ -316,6 +323,7 @@ public class CompanyService : ICompanyService
         company.UpdatedAt = DateTime.Now;
 
         await _context.SaveChangesAsync();
+        await _auditLogService.LogAsync(null, "UnsuspendCompany", "tblCompany", companyId.ToString(), "Mở khóa đình chỉ công ty");
         _logger.LogInformation("SuperAdmin đã mở khóa lại công ty {CompanyId} ({Name})", company.CompanyId, company.Name);
         return (true, "Đã mở khóa công ty.");
     }

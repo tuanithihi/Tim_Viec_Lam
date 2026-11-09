@@ -188,3 +188,36 @@
 - **Rủi ro / việc để giai đoạn sau**:
   - Ghi nhật ký kiểm duyệt công ty vào bảng `tblAuditLog` sẽ được kết nối ở Sprint 3B.
   - Đăng tin tuyển dụng và tìm kiếm việc làm theo tọa độ/bán kính sẽ được triển khai ở Sprint 4A.
+
+## SPRINT 3 · NHÓM 2 (3B) — Quản lý tin tuyển dụng & Kiểm duyệt (Chức năng 5)
+- **Thời gian hoàn thành**: 2026-11-09 15:35:00
+- **Trạng thái**: PASS
+- **Lệnh đã chạy**:
+  1. `dotnet build TimViecLam.sln`: Build succeeded (0 Warning(s), 0 Error(s)).
+  2. `dotnet test "TimViecLam\TimViecLam.sln" --filter "FullyQualifiedName~Sprint3B"`: Passed: 17, Failed: 0, Skipped: 0, Total: 17, Duration: 765 ms.
+  3. Smoke test HTTP trên ứng dụng chạy thực tế:
+     - `GET /nha-tuyen-dung/tin-tuyen-dung` (chưa đăng nhập) -> 302 Redirect (về /dang-nhap)
+     - `GET /nha-tuyen-dung/tin-tuyen-dung/them` (chưa đăng nhập) -> 302 Redirect (về /dang-nhap)
+     - `GET /admin/duyet-tin` (chưa đăng nhập) -> 302 Redirect (về /dang-nhap)
+     - `POST /nha-tuyen-dung/tin-tuyen-dung/them` (không có Antiforgery token) -> 400 Bad Request
+- **Danh sách mã AC đã phủ**:
+  - `AC-S3B.1`: Chống IDOR: NTD B gọi mọi thao tác xem, sửa, xóa, đóng, mở lại, nhân bản tin của NTD A đều nhận 404 Not Found, dữ liệu của NTD A không đổi cả ở form lẫn AJAX.
+  - `AC-S3B.2`: Chống Over-posting: form tạo/sửa tin không bind các trường bảo mật (`CompanyId`, `ApprovalStatus`, `ViewCount`, `IsFeatured`, `PublishedAt`), mọi giá trị nhạy cảm được gán ở server.
+  - `AC-S3B.3`: Validate server: lương tối thiểu > tối đa, hạn nộp quá khứ hoặc quá 90 ngày, > 15 kỹ năng, tiêu đề rỗng hoặc quá dài bị từ chối kèm thông báo tiếng Việt rõ ràng.
+  - `AC-S3B.4`: Làm sạch HTML: mô tả chứa `<script>`, `onerror=`, `javascript:` bị loại bỏ hoàn toàn bằng thư viện `HtmlSanitizer` (allow-list); các thẻ an toàn (`<b>`, `<ul>`, `<li>`, `<p>`, `<a href="https://...">`) được giữ nguyên.
+  - `AC-S3B.5`: Vòng đời tin: chuyển trạng thái hợp lệ (`Draft` -> `Pending` -> `Published`/`Rejected` -> `Closed`); sửa trường quan trọng của tin `Published` tự động quay về `Pending`; khi cấu hình `ListingSettings:AutoApprove = true` tin tự động duyệt sang `Published`.
+  - `AC-S3B.6`: Phân quyền nhà tuyển dụng: NTD thuộc công ty ở trạng thái `Pending`, `Suspended`, `Rejected` bị chặn tạo hoặc gửi tin tuyển dụng.
+  - `AC-S3B.7`: Slug duy nhất có hậu tố tự động khi trùng; `SearchText` không dấu sinh chuẩn xác khi tạo và tự động cập nhật khi đổi tiêu đề tin.
+  - `AC-S3B.8`: `JobQueryExtensions.WhereVisibleToPublic()` lọc chính xác chỉ tin `Published`, còn hạn nộp (`ExpiresAt > now`) và thuộc công ty `Approved`; loại bỏ hoàn toàn tin `Draft`, `Pending`, `Rejected`, `Expired`, `Closed`.
+  - `AC-S3B.9`: Chặn xóa mềm tin tuyển dụng khi đã có hồ sơ ứng tuyển (`tblApplication`).
+  - `AC-S3B.10`: SuperAdmin kiểm duyệt tin: xem trước, duyệt tin (`Published` + gán `PublishedAt`), từ chối tin và gỡ tin bắt buộc nhập lý do; chỉ tài khoản SuperAdmin mới có quyền (`[Authorize(Policy = "SuperAdminOnly")]`).
+  - `AC-S3B.11`: Duyệt hàng loạt (`BatchApprove`): chỉ duyệt các tin ở trạng thái `Pending`, tự động bỏ qua các tin không hợp lệ, phản hồi chính xác số lượng thực tế đã duyệt.
+  - `AC-S3B.12`: Nhật ký kiểm duyệt (`tblAuditLog`): ghi nhận đầy đủ hành động tạo, sửa, đóng, mở lại, xóa tin của NTD; duyệt, từ chối, gỡ tin của SuperAdmin; đồng thời nối thành công ghi log kiểm duyệt hồ sơ công ty từ Sprint 3A (`ApproveCompany`, `RejectCompany`, `SuspendCompany`, `UnsuspendCompany`, `UpdateCompanyProfile`).
+  - `AC-S3B.13`: Dữ liệu mẫu (Seed): đối soát hệ thống đã có >= 3 công ty duyệt, >= 6 địa điểm thật tại Hà Nội/TP.HCM/Đà Nẵng, >= 40 tin `Published` phong phú đa dạng (nhiều mức lương, ngành, hình thức, kinh nghiệm, tin từ xa không tọa độ, tin sắp hết hạn, tin `Pending`/`Rejected`/`Expired`).
+- **Giả định đã chọn**:
+  - Dùng thư viện `HtmlSanitizer` cấu hình allow-list thẻ và URL scheme chuẩn thay vì dùng regex.
+  - Bổ sung cấu hình `ListingSettings:AutoApprove` cho phép chuyển đổi linh hoạt chế độ tự động duyệt tin hoặc duyệt thủ công.
+  - Khi nhân bản tin (`Duplicate`), tin mới luôn ở trạng thái `Draft` và thêm tiền tố `[Bản sao]` vào tiêu đề.
+- **Rủi ro / việc để giai đoạn sau**:
+  - Tự động hóa cập nhật trạng thái `Expired` cho các tin quá hạn nộp sẽ được kích hoạt thông qua Background Service ở Sprint tương ứng.
+  - Chức năng tìm kiếm việc làm nâng cao theo từ khóa, ngành nghề, bán kính và bản đồ sẽ triển khai tại Sprint 4A.
