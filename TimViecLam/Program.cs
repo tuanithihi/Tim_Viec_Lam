@@ -50,11 +50,27 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
                     }
 
                     // Employer bị Suspended giữa phiên -> request kế tiếp bị chặn (AC-S1.5)
-                    if (user.Role == "Employer" && user.Company != null && user.Company.Status == "Suspended")
+                    if (user.Role == "Employer" && user.Company != null)
                     {
-                        context.RejectPrincipal();
-                        await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                        return;
+                        if (user.Company.Status == "Suspended")
+                        {
+                            context.RejectPrincipal();
+                            await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                            return;
+                        }
+
+                        // Tự động đồng bộ claim CompanyStatus khi trạng thái công ty được SuperAdmin thay đổi
+                        var currentStatusClaim = context.Principal?.FindFirst("CompanyStatus")?.Value;
+                        if (currentStatusClaim != user.Company.Status)
+                        {
+                            if (context.Principal?.Identity is ClaimsIdentity identity)
+                            {
+                                var oldClaim = identity.FindFirst("CompanyStatus");
+                                if (oldClaim != null) identity.RemoveClaim(oldClaim);
+                                identity.AddClaim(new Claim("CompanyStatus", user.Company.Status));
+                                context.ShouldRenew = true;
+                            }
+                        }
                     }
                 }
                 else
@@ -119,8 +135,10 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IEmailSender, LoggingEmailSender>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IGeoService, GeoService>();
-// builder.Services.AddScoped<IJobService, JobService>();
-// builder.Services.AddScoped<IEmployerService, EmployerService>();
+builder.Services.AddScoped<IFileUploadService, FileUploadService>();
+builder.Services.AddHttpClient<INominatimGeocodeService, NominatimGeocodeService>();
+builder.Services.AddScoped<ICompanyService, CompanyService>();
+builder.Services.AddScoped<IWorkplaceService, WorkplaceService>();
 
 var app = builder.Build();
 

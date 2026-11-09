@@ -157,3 +157,34 @@
   - Geo API cấu hình cache 1 giờ (`Cache-Control: public, max-age=3600`) và `IMemoryCache` ở server để tối ưu hiệu năng cho dữ liệu địa giới ít thay đổi.
 - **Rủi ro / việc để giai đoạn sau**:
   - Giao diện đăng tin việc làm của Employer ở Sprint 4A sẽ sử dụng Geo API (`/api/geo/provinces`, `/districts`, `/wards`) và các danh mục từ Sprint 2 để render cascading dropdown và bộ chọn kỹ năng/phúc lợi.
+
+## SPRINT 3 · NHÓM 1 (3A) — Quản lý công ty & Địa điểm làm việc (Chức năng 4)
+- **Thời gian hoàn thành**: 2026-11-09 14:18:00
+- **Trạng thái**: PASS
+- **Lệnh đã chạy**:
+  1. `dotnet build TimViecLam.sln`: Build succeeded (0 Warning(s), 0 Error(s)).
+  2. `dotnet test --filter "FullyQualifiedName~Sprint3A"`: Passed: 33, Failed: 0, Skipped: 0, Total: 33, Duration: 3 s.
+  3. Smoke test HTTP trên ứng dụng chạy thực tế:
+     - `GET /nha-tuyen-dung/ho-so` (chưa đăng nhập) -> 302 Redirect (tới /dang-nhap?ReturnUrl=/nha-tuyen-dung/ho-so)
+     - `GET /nha-tuyen-dung/dia-diem` (chưa đăng nhập) -> 302 Redirect (tới /dang-nhap?ReturnUrl=/nha-tuyen-dung/dia-diem)
+     - `GET /nha-tuyen-dung/dang-tin` (chưa đăng nhập) -> 302 Redirect (tới /dang-nhap?ReturnUrl=/nha-tuyen-dung/dang-tin)
+     - `GET /Admin/Company` (chưa đăng nhập) -> 302 Redirect (tới /dang-nhap?ReturnUrl=/Admin/Company)
+     - `GET /api/geo/geocode?q=Hanoi` (chưa đăng nhập) -> 302 Redirect (tới /dang-nhap)
+- **Danh sách mã AC đã phủ**:
+  - `AC-S3A.1`: Chống IDOR: NTD B gọi mọi thao tác xem, sửa, xóa địa điểm làm việc của NTD A đều nhận về 404 Not Found, dữ liệu của công ty A được bảo vệ toàn vẹn tuyệt đối.
+  - `AC-S3A.2`: Chống Over-posting: form cập nhật thông tin công ty và tạo địa điểm không bind các trường bảo mật (`CompanyId`, `UserId`, `Status`, `RejectReason`), các giá trị nhạy cảm được gán cố định từ Claims của phiên đăng nhập.
+  - `AC-S3A.3`: Tải lên logo: kiểm tra chữ ký Magic bytes (từ chối file .exe đổi đuôi .png), giới hạn dung lượng <= 2MB, quét mã độc trong file SVG (từ chối script, javascript:, event handlers), sinh tên ngẫu nhiên GUID, tạo ảnh thu nhỏ bằng ImageSharp, dọn dẹp file cũ khi cập nhật hoặc xóa logo.
+  - `AC-S3A.4`: Kiểm tra hợp lệ địa điểm: tọa độ bắt buộc nằm trong phạm vi lãnh thổ Việt Nam (Lat 8–24, Lng 102–110); toàn vẹn phân cấp hành chính: Quận/Huyện phải thuộc Tỉnh/Thành phố đã chọn, Phường/Xã phải thuộc Quận/Huyện đã chọn.
+  - `AC-S3A.5`: Dịch vụ Geocode Nominatim (`/api/geo/geocode`): yêu cầu đăng nhập (khách -> 401/302), có rate limit, cơ chế cache 24h ngăn ngừa gọi lại request ra ngoài, gửi header `User-Agent` định danh chuẩn quy định, giới hạn tối đa 1 req/giây toàn hệ thống và timeout 5 giây phản hồi lỗi thân thiện.
+  - `AC-S3A.6`: Chặn xóa địa điểm làm việc nếu đang có tin tuyển dụng (`tblJob`) liên kết.
+  - `AC-S3A.7`: NTD ở trạng thái `Pending`, `Rejected`, `Suspended` xem được trang trạng thái kèm lý do từ chối/tạm khóa và bị chặn truy cập khu vực đăng tin (`[Authorize(Policy = "ApprovedEmployer")]`).
+  - `AC-S3A.8`: SuperAdmin kiểm duyệt công ty: các hành động Approve, Reject (bắt buộc nhập lý do), Suspend (bắt buộc nhập lý do), Unsuspend hoạt động chính xác; bảo vệ bởi `[Authorize(Policy = "SuperAdminOnly")]`.
+  - `AC-S3A.9`: Tên công ty khi đổi sẽ tự động sinh lại `Slug` duy nhất (trường hợp trùng được tự động thêm hậu tố `-1`, `-2`).
+  - `AC-S3A.10`: Truy vấn danh sách địa điểm tối ưu với <= 2 truy vấn DB (đếm + phân trang).
+  - `AC-S3A.11`: Toàn bộ mã nguồn Controllers công ty và địa điểm không gọi `.GetAwaiter().GetResult()`, không bind trực tiếp entity `tblCompany`/`tblWorkplace`.
+- **Giả định đã chọn**:
+  - Giới hạn tốc độ gọi Nominatim OpenStreetMap được kiểm soát bằng `SemaphoreSlim(1, 1)` và timestamp tracking ở tầng ứng dụng kết hợp `IMemoryCache` 24 giờ.
+  - Bản đồ tương tác sử dụng thư viện Leaflet và OpenStreetMap tiles, cho phép kéo thả ghim vị trí hoặc click bản đồ để tự động lấy tọa độ Lat/Lng.
+- **Rủi ro / việc để giai đoạn sau**:
+  - Ghi nhật ký kiểm duyệt công ty vào bảng `tblAuditLog` sẽ được kết nối ở Sprint 3B.
+  - Đăng tin tuyển dụng và tìm kiếm việc làm theo tọa độ/bán kính sẽ được triển khai ở Sprint 4A.

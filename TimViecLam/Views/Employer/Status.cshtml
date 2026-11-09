@@ -1,0 +1,97 @@
+@model TimViecLam.Models.ViewModels.CompanyProfileViewModel
+@{
+    ViewData["Title"] = "Trạng thái tài khoản Nhà tuyển dụng";
+}
+
+<div class="container-xl py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-7">
+            <div class="card border shadow-sm">
+                <div class="card-body p-4 p-md-5 text-center">
+                    @if (Model.Status == "Approved")
+                    {
+                        <div class="mb-3 text-success">
+                            <i class="bi bi-patch-check-fill" style="font-size: 4rem;"></i>
+                        </div>
+                        <h1 class="h3 fw-bold text-success mb-2">Công ty đã được phê duyệt!</h1>
+                        <p class="text-muted mb-4">
+                            Hồ sơ công ty <strong>@Model.Name</strong> đã được ban quản trị xét duyệt thành công.
+                            Bạn hiện có đầy đủ quyền đăng tin tuyển dụng và quản lý các địa điểm làm việc.
+                        </p>
+                        <div class="d-flex justify-content-center gap-2 flex-wrap">
+                            <a href="/nha-tuyen-dung/dang-tin" class="btn btn-brand">
+                                <i class="bi bi-plus-circle me-1"></i>Đăng tin tuyển dụng
+                            </a>
+                            <a href="/nha-tuyen-dung/ho-so" class="btn btn-neutral">
+                                <i class="bi bi-building me-1"></i>Hồ sơ công ty
+                            </a>
+                            <a href="/nha-tuyen-dung/dia-diem" class="btn btn-neutral">
+                                <i class="bi bi-geo-alt me-1"></i>Địa điểm làm việc
+                            </a>
+                        </div>
+                    }
+                    else if (Model.Status == "Pending")
+                    {
+                        <div class="mb-3 text-warning">
+                            <i class="bi bi-hourglass-top" style="font-size: 4rem;"></i>
+                        </div>
+                        <h1 class="h3 fw-bold text-warning-emphasis mb-2">Hồ sơ đang chờ phê duyệt</h1>
+                        <p class="text-muted mb-4">
+                            Hồ sơ công ty <strong>@Model.Name</strong> đã được gửi lên hệ thống và đang chờ SuperAdmin xem xét xác thực.
+                            Trong thời gian này, bạn có thể hoàn thiện thông tin công ty và thiết lập các địa điểm làm việc. Chức năng đăng tin sẽ tự động mở sau khi duyệt.
+                        </p>
+                        <div class="d-flex justify-content-center gap-2 flex-wrap">
+                            <a href="/nha-tuyen-dung/ho-so" class="btn btn-neutral">
+                                <i class="bi bi-pencil-square me-1"></i>Hoàn thiện hồ sơ
+                            </a>
+                            <a href="/nha-tuyen-dung/dia-diem" class="btn btn-neutral">
+                                <i class="bi bi-geo-alt me-1"></i>Quản lý địa điểm
+                            </a>
+                        </div>
+                    }
+                    else if (Model.Status == "Rejected")
+                    {
+                        <div class="mb-3 text-danger">
+                            <i class="bi bi-x-circle-fill" style="font-size: 4rem;"></i>
+                        </div>
+                        <h1 class="h3 fw-bold text-danger mb-2">Hồ sơ bị từ chối phê duyệt</h1>
+                        <p class="text-muted mb-3">
+                            Rất tiếc, hồ sơ công ty <strong>@Model.Name</strong> chưa đạt yêu cầu kiểm duyệt của ban quản trị.
+                        </p>
+                        @if (!string.IsNullOrEmpty(Model.RejectReason))
+                        {
+                            <div class="alert alert-danger text-start p-3 mb-4 border" role="alert">
+                                <div class="fw-bold mb-1"><i class="bi bi-exclamation-triangle me-1"></i>Lý do từ chối:</div>
+                                <div>@Model.RejectReason</div>
+                            </div>
+                        }
+                        <p class="text-muted small mb-4">Vui lòng cập nhật lại thông tin chính xác theo yêu cầu để được xét duyệt lại.</p>
+                        <div class="d-flex justify-content-center gap-2">
+                            <a href="/nha-tuyen-dung/ho-so" class="btn btn-brand">
+                                <i class="bi bi-arrow-repeat me-1"></i>Cập nhật lại hồ sơ
+                            </a>
+                        </div>
+                    }
+                    else if (Model.Status == "Suspended")
+                    {
+                        <div class="mb-3 text-secondary">
+                            <i class="bi bi-shield-slash-fill" style="font-size: 4rem;"></i>
+                        </div>
+                        <h1 class="h3 fw-bold text-dark mb-2">Tài khoản doanh nghiệp đang bị tạm khóa</h1>
+                        <p class="text-muted mb-3">
+                            Doanh nghiệp <strong>@Model.Name</strong> hiện đang trong trạng thái tạm ngừng hoạt động trên hệ thống.
+                        </p>
+                        @if (!string.IsNullOrEmpty(Model.RejectReason))
+                        {
+                            <div class="alert alert-secondary text-start p-3 mb-4 border" role="alert">
+                                <div class="fw-bold mb-1"><i class="bi bi-info-circle me-1"></i>Lý do tạm khóa:</div>
+                                <div>@Model.RejectReason</div>
+                            </div>
+                        }
+                        <p class="text-muted small mb-0">Mọi tin tuyển dụng của công ty đã được ẩn khỏi danh sách tìm kiếm công khai. Vui lòng liên hệ ban quản trị để giải quyết.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

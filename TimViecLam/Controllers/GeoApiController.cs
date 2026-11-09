@@ -1,20 +1,24 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using TimViecLam.Services;
 
 namespace TimViecLam.Controllers;
 
 /// <summary>
-/// API địa lý công khai phục vụ dropdown phụ thuộc Tỉnh/Thành -> Quận/Huyện -> Phường/Xã.
+/// API địa lý công khai phục vụ dropdown phụ thuộc Tỉnh/Thành -> Quận/Huyện -> Phường/Xã và dịch vụ Geocode bản đồ.
 /// </summary>
 [ApiController]
 [Route("api/geo")]
 public class GeoApiController : ControllerBase
 {
     private readonly IGeoService _geoService;
+    private readonly INominatimGeocodeService _geocodeService;
 
-    public GeoApiController(IGeoService geoService)
+    public GeoApiController(IGeoService geoService, INominatimGeocodeService geocodeService)
     {
         _geoService = geoService;
+        _geocodeService = geocodeService;
     }
 
     /// <summary>
@@ -62,5 +66,27 @@ public class GeoApiController : ControllerBase
         var wards = await _geoService.GetWardsByDistrictIdAsync(districtId.Value);
         return Ok(wards);
     }
-}
 
+    /// <summary>
+    /// Tìm kiếm tọa độ từ chuỗi địa chỉ văn bản (yêu cầu đăng nhập, giới hạn rate limit, cache).
+    /// GET /api/geo/geocode?q=Hanoi
+    /// </summary>
+    [Authorize]
+    [EnableRateLimiting("auth-policy")]
+    [HttpGet("geocode")]
+    public async Task<IActionResult> Geocode([FromQuery] string? q)
+    {
+        if (string.IsNullOrWhiteSpace(q))
+        {
+            return BadRequest(new { message = "Vui lòng nhập địa chỉ tìm kiếm tọa độ." });
+        }
+
+        var result = await _geocodeService.SearchAsync(q, HttpContext.RequestAborted);
+        if (!result.Success)
+        {
+            return BadRequest(new { message = result.Message });
+        }
+
+        return Ok(result.Results);
+    }
+}

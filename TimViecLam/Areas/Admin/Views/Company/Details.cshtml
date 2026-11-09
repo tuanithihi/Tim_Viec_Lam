@@ -1,0 +1,230 @@
+@model TimViecLam.Models.ViewModels.CompanyProfileViewModel
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = $"Chi tiết công ty - {Model.Name}";
+}
+
+<div class="mb-4">
+    <a href="/Admin/Company" class="text-decoration-none text-muted small">
+        <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách công ty
+    </a>
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mt-2">
+        <div class="d-flex align-items-center gap-3">
+            @if (!string.IsNullOrEmpty(Model.Logo))
+            {
+                <img src="@Model.Logo" alt="@Model.Name" class="rounded border p-1" style="width: 64px; height: 64px; object-fit: contain; background: #fff;" />
+            }
+            else
+            {
+                <div class="rounded border d-flex align-items-center justify-content-center bg-light text-muted" style="width: 64px; height: 64px;">
+                    <i class="bi bi-building fs-3"></i>
+                </div>
+            }
+            <div>
+                <h1 class="h3 mb-0 text-dark fw-bold">@Model.Name</h1>
+                <div class="text-muted small mt-1">
+                    <span class="badge bg-light text-dark border me-2">Quy mô: @Model.CompanySize</span>
+                    <span class="text-xs">Đường dẫn: <code>@Model.Slug</code></span>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            @if (Model.Status == "Approved")
+            {
+                <span class="badge bg-success-subtle text-success fs-6 border border-success-subtle px-3 py-2">
+                    <i class="bi bi-check-circle-fill me-1"></i>Đã phê duyệt
+                </span>
+            }
+            else if (Model.Status == "Pending")
+            {
+                <span class="badge bg-warning-subtle text-warning-emphasis fs-6 border border-warning-subtle px-3 py-2">
+                    <i class="bi bi-hourglass-split me-1"></i>Chờ phê duyệt
+                </span>
+            }
+            else if (Model.Status == "Rejected")
+            {
+                <span class="badge bg-danger-subtle text-danger fs-6 border border-danger-subtle px-3 py-2">
+                    <i class="bi bi-x-circle-fill me-1"></i>Bị từ chối
+                </span>
+            }
+            else if (Model.Status == "Suspended")
+            {
+                <span class="badge bg-secondary-subtle text-secondary fs-6 border border-secondary-subtle px-3 py-2">
+                    <i class="bi bi-lock-fill me-1"></i>Bị tạm khóa
+                </span>
+            }
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.RejectReason))
+{
+    <div class="alert alert-warning border shadow-sm mb-4" role="alert">
+        <h6 class="alert-heading fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill me-2"></i>Lý do từ chối / Tạm khóa:</h6>
+        <p class="mb-0">@Model.RejectReason</p>
+    </div>
+}
+
+<div class="row g-4">
+    <!-- Cột trái: Thông tin liên hệ & pháp lý -->
+    <div class="col-12 col-lg-8">
+        <div class="card border shadow-sm mb-4">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-info-circle me-2 text-primary"></i>Thông tin chi tiết doanh nghiệp</h6>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 text-muted">Mã số thuế:</dt>
+                    <dd class="col-sm-8 fw-semibold">@(string.IsNullOrEmpty(Model.TaxCode) ? "Chưa cập nhật" : Model.TaxCode)</dd>
+
+                    <dt class="col-sm-4 text-muted">Website:</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrEmpty(Model.Website))
+                        {
+                            <a href="@Model.Website" target="_blank" class="text-decoration-none">
+                                @Model.Website <i class="bi bi-box-arrow-up-right text-xs"></i>
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Chưa cập nhật</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4 text-muted">Email liên hệ:</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrEmpty(Model.Email) ? "Chưa cập nhật" : Model.Email)</dd>
+
+                    <dt class="col-sm-4 text-muted">Số điện thoại:</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrEmpty(Model.Phone) ? "Chưa cập nhật" : Model.Phone)</dd>
+
+                    <dt class="col-sm-4 text-muted">Địa chỉ trụ sở chính:</dt>
+                    <dd class="col-sm-8">@(string.IsNullOrEmpty(Model.Address) ? "Chưa cập nhật" : Model.Address)</dd>
+
+                    <dt class="col-sm-4 text-muted">Ngày đăng ký:</dt>
+                    <dd class="col-sm-8">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm:ss")</dd>
+
+                    @if (Model.UpdatedAt.HasValue)
+                    {
+                        <dt class="col-sm-4 text-muted">Cập nhật lần cuối:</dt>
+                        <dd class="col-sm-8">@Model.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm:ss")</dd>
+                    }
+                </dl>
+            </div>
+        </div>
+
+        <div class="card border shadow-sm">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-card-text me-2 text-primary"></i>Giới thiệu công ty</h6>
+            </div>
+            <div class="card-body">
+                @if (!string.IsNullOrWhiteSpace(Model.Description))
+                {
+                    <div style="white-space: pre-line;">@Model.Description</div>
+                }
+                else
+                {
+                    <p class="text-muted mb-0 fst-italic">Công ty chưa cập nhật mô tả giới thiệu.</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Cột phải: Thao tác kiểm duyệt -->
+    <div class="col-12 col-lg-4">
+        <div class="card border shadow-sm">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-shield-check me-2 text-success"></i>Hành động phê duyệt</h6>
+            </div>
+            <div class="card-body d-flex flex-column gap-2">
+                @if (Model.Status == "Pending" || Model.Status == "Rejected")
+                {
+                    <form asp-action="Approve" asp-route-id="@Model.CompanyId" method="post" class="w-100">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-check-circle me-1"></i>Phê duyệt công ty
+                        </button>
+                    </form>
+                }
+
+                @if (Model.Status == "Pending")
+                {
+                    <button type="button" class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#rejectDetailsModal">
+                        <i class="bi bi-x-circle me-1"></i>Từ chối phê duyệt
+                    </button>
+                }
+
+                @if (Model.Status == "Approved")
+                {
+                    <button type="button" class="btn btn-outline-warning w-100" data-bs-toggle="modal" data-bs-target="#suspendDetailsModal">
+                        <i class="bi bi-lock me-1"></i>Tạm khóa công ty
+                    </button>
+                }
+
+                @if (Model.Status == "Suspended")
+                {
+                    <form asp-action="Unsuspend" asp-route-id="@Model.CompanyId" method="post" class="w-100">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-unlock me-1"></i>Mở khóa công ty
+                        </button>
+                    </form>
+                }
+
+                <a href="/Admin/Company" class="btn btn-outline-secondary w-100 mt-2">
+                    <i class="bi bi-list me-1"></i>Về danh sách
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Từ chối -->
+<div class="modal fade" id="rejectDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Reject" asp-route-id="@Model.CompanyId" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title fs-6 fw-bold text-danger">Từ chối phê duyệt công ty</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Lý do từ chối <span class="text-danger">*</span></label>
+                        <textarea name="reason" class="form-control" rows="3" required placeholder="Nhập lý do cụ thể..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger btn-sm">Xác nhận Từ chối</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tạm khóa -->
+<div class="modal fade" id="suspendDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Suspend" asp-route-id="@Model.CompanyId" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <h5 class="modal-title fs-6 fw-bold text-warning-emphasis">Tạm khóa công ty</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Lý do tạm khóa <span class="text-danger">*</span></label>
+                        <textarea name="reason" class="form-control" rows="3" required placeholder="Nhập lý do tạm khóa..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-warning btn-sm">Xác nhận Tạm khóa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
