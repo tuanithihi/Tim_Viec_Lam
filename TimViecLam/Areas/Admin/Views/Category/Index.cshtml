@@ -26,7 +26,7 @@
             <div class="col-md-6 col-12">
                 <div class="input-group input-group-sm">
                     <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
-                    <input type="text" name="search" class="form-control" placeholder="Tìm theo tên, slug, mô tả..." value="@search" />
+                    <input type="text" name="search" class="form-control" placeholder="Tìm theo tên, đường dẫn tĩnh, mô tả..." value="@search" />
                 </div>
             </div>
             <div class="col-auto">
@@ -53,7 +53,7 @@
                         <th style="width: 50px;" class="text-center">#</th>
                         <th style="width: 60px;" class="text-center">Icon</th>
                         <th>Tên ngành nghề</th>
-                        <th>Đường dẫn (Slug)</th>
+                        <th>Đường dẫn tĩnh</th>
                         <th class="text-center">Thứ tự</th>
                         <th class="text-center">Số việc làm</th>
                         <th class="text-center">Trạng thái</th>
@@ -230,9 +230,9 @@
                             <input type="text" name="Name" class="form-control" value="@cat.Name" required />
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Đường dẫn định danh (Slug)</label>
+                            <label class="form-label">Đường dẫn tĩnh</label>
                             <input type="text" class="form-control bg-light" value="@cat.Slug" readonly disabled />
-                            <div class="text-xs text-muted mt-1">Slug sẽ tự động cập nhật lại nếu bạn đổi tên.</div>
+                            <div class="text-xs text-muted mt-1">Đường dẫn tĩnh sẽ tự động cập nhật lại nếu bạn đổi tên.</div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Biểu tượng (Bootstrap Icons class)</label>

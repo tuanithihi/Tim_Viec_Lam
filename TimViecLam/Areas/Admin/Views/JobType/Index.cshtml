@@ -26,7 +26,7 @@
             <div class="col-md-6 col-12">
                 <div class="input-group input-group-sm">
                     <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
-                    <input type="text" name="search" class="form-control" placeholder="Tìm theo tên, mã, slug..." value="@search" />
+                    <input type="text" name="search" class="form-control" placeholder="Tìm theo tên, mã, đường dẫn tĩnh..." value="@search" />
                 </div>
             </div>
             <div class="col-auto">
@@ -53,7 +53,7 @@
                         <th style="width: 50px;" class="text-center">#</th>
                         <th>Tên hình thức</th>
                         <th>Mã (Code)</th>
-                        <th>Slug</th>
+                        <th>Đường dẫn tĩnh</th>
                         <th class="text-center">Thứ tự</th>
                         <th class="text-center">Số việc làm</th>
                         <th class="text-center">Trạng thái</th>
@@ -227,7 +227,7 @@
                             <input type="text" name="Code" class="form-control" value="@item.Code" required />
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Đường dẫn định danh (Slug)</label>
+                            <label class="form-label">Đường dẫn tĩnh</label>
                             <input type="text" class="form-control bg-light" value="@item.Slug" readonly disabled />
                         </div>
                         <div class="mb-3">
