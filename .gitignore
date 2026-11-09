@@ -10,6 +10,7 @@ obj/
 *.sln.docstates
 
 # ── Uploads của người dùng (không commit lên Git) ───────────────
+**/wwwroot/uploads/
 wwwroot/uploads/
 App_Data/
 
