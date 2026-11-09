@@ -61,6 +61,13 @@ img {
   display: block;
 }
 
+/* Bảo vệ các thư viện bản đồ tương tác (như Leaflet) không bị vỡ layout ảnh tile */
+.leaflet-container img {
+  max-width: none !important;
+  max-height: none !important;
+  display: inline !important;
+}
+
 /* ── Buttons ─────────────────────────────────────────────────── */
 .btn-brand {
   background-color: var(--brand-primary);

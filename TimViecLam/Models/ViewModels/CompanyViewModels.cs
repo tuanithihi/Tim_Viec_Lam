@@ -172,3 +172,4 @@ public class WorkplaceInputModel
     [Display(Name = "Là trụ sở chính")]
     public bool IsHeadOffice { get; set; }
 }
+

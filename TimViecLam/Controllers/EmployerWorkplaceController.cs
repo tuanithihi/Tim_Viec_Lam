@@ -192,3 +192,4 @@ public class EmployerWorkplaceController : Controller
         return RedirectToAction(nameof(Index));
     }
 }
+

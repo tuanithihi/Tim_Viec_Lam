@@ -148,3 +148,4 @@ public class CompanyController : Controller
         return RedirectToAction(nameof(Index));
     }
 }
+

@@ -14,3 +14,4 @@ public interface IWorkplaceService
     Task<(bool Success, string? Message)> UpdateWorkplaceAsync(int workplaceId, int companyId, WorkplaceInputModel model);
     Task<(bool Success, string? Message)> DeleteWorkplaceAsync(int workplaceId, int companyId);
 }
+

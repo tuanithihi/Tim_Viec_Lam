@@ -21,3 +21,4 @@ public interface ICompanyService
     Task<(bool Success, string? Message)> SuspendCompanyAsync(int companyId, string reason);
     Task<(bool Success, string? Message)> UnsuspendCompanyAsync(int companyId);
 }
+

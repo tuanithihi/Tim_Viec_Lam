@@ -23,3 +23,4 @@ public interface IFileUploadService
     /// </summary>
     bool DeleteFile(string? relativePath);
 }
+

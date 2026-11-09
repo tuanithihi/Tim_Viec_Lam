@@ -5,13 +5,22 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
     <style>
         #workplaceMap {
             height: 380px;
             width: 100%;
             border-radius: var(--radius-md);
             border: 1px solid var(--border-color);
+            position: relative;
+            z-index: 1;
+        }
+        #workplaceMap img,
+        .leaflet-pane img,
+        .leaflet-tile {
+            max-width: none !important;
+            max-height: none !important;
+            display: inline !important;
         }
     </style>
 }
@@ -140,7 +149,7 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async function () {
             const selectProvince = document.getElementById('selectProvince');
@@ -155,16 +164,30 @@
             const initialDistrictId = selectDistrict.dataset.initialDistrict;
             const initialWardId = selectWard.dataset.initialWard;
 
+            // ── Khởi tạo Icon chuẩn cho Leaflet ─────────────────────────
+            delete L.Icon.Default.prototype._getIconUrl;
+            L.Icon.Default.mergeOptions({
+                iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+                iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png'
+            });
+
             // ── Khởi tạo Leaflet Map ────────────────────────────────────
             const initialLat = parseFloat(inputLat.value) || 21.0285;
             const initialLng = parseFloat(inputLng.value) || 105.8542;
 
             const map = L.map('workplaceMap').setView([initialLat, initialLng], 15);
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            // Sử dụng tile layer CartoDB Voyager tốc độ cao, không lỗi CORS/Referrer
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
                 maxZoom: 19,
-                attribution: '&copy; OpenStreetMap contributors'
+                subdomains: 'abcd',
+                attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
             }).addTo(map);
+
+            setTimeout(function () {
+                map.invalidateSize();
+            }, 300);
 
             let marker = L.marker([initialLat, initialLng], { draggable: true }).addTo(map);
 
@@ -283,3 +306,4 @@
         });
     </script>
 }
+

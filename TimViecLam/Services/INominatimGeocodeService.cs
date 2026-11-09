@@ -12,3 +12,4 @@ public interface INominatimGeocodeService
     /// </summary>
     Task<(bool Success, string? Message, List<GeocodeResultDto> Results)> SearchAsync(string query, CancellationToken cancellationToken = default);
 }
+
