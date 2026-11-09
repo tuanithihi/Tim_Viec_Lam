@@ -5,7 +5,7 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <link rel="stylesheet" href="~/lib/leaflet/leaflet.css" asp-append-version="true" />
     <style>
         #workplaceMap {
             height: 380px;
@@ -14,13 +14,17 @@
             border: 1px solid var(--border-color);
             position: relative;
             z-index: 1;
+            background-color: #f1f5f9;
         }
-        #workplaceMap img,
+        /* Sửa triệt để xung đột CSS toàn cục làm vỡ tile ảnh Leaflet */
+        .leaflet-container img,
         .leaflet-pane img,
+        .leaflet-tile-pane img,
         .leaflet-tile {
             max-width: none !important;
             max-height: none !important;
             display: inline !important;
+            box-shadow: none !important;
         }
     </style>
 }
@@ -149,9 +153,10 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="~/lib/leaflet/leaflet.js" asp-append-version="true"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async function () {
+            // ── 1. CASCADING DROPDOWNS ĐỘC LẬP (Nạp dữ liệu cha - con) ──────
             const selectProvince = document.getElementById('selectProvince');
             const selectDistrict = document.getElementById('selectDistrict');
             const selectWard = document.getElementById('selectWard');
@@ -161,53 +166,11 @@
             const btnGeocode = document.getElementById('btnGeocode');
             const geocodeStatus = document.getElementById('geocodeStatus');
 
-            const initialDistrictId = selectDistrict.dataset.initialDistrict;
-            const initialWardId = selectWard.dataset.initialWard;
+            const initialDistrictId = selectDistrict ? selectDistrict.dataset.initialDistrict : null;
+            const initialWardId = selectWard ? selectWard.dataset.initialWard : null;
 
-            // ── Khởi tạo Icon chuẩn cho Leaflet ─────────────────────────
-            delete L.Icon.Default.prototype._getIconUrl;
-            L.Icon.Default.mergeOptions({
-                iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-                iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png'
-            });
-
-            // ── Khởi tạo Leaflet Map ────────────────────────────────────
-            const initialLat = parseFloat(inputLat.value) || 21.0285;
-            const initialLng = parseFloat(inputLng.value) || 105.8542;
-
-            const map = L.map('workplaceMap').setView([initialLat, initialLng], 15);
-
-            // Sử dụng tile layer CartoDB Voyager tốc độ cao, không lỗi CORS/Referrer
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                maxZoom: 19,
-                subdomains: 'abcd',
-                attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
-            }).addTo(map);
-
-            setTimeout(function () {
-                map.invalidateSize();
-            }, 300);
-
-            let marker = L.marker([initialLat, initialLng], { draggable: true }).addTo(map);
-
-            function updateInputs(lat, lng) {
-                inputLat.value = lat.toFixed(6);
-                inputLng.value = lng.toFixed(6);
-            }
-
-            marker.on('dragend', function (e) {
-                const pos = e.target.getLatLng();
-                updateInputs(pos.lat, pos.lng);
-            });
-
-            map.on('click', function (e) {
-                marker.setLatLng(e.latlng);
-                updateInputs(e.latlng.lat, e.latlng.lng);
-            });
-
-            // ── Nạp danh sách Quận/Huyện ban đầu ─────────────────────────
             async function loadDistricts(provId, selectedDistId) {
+                if (!selectDistrict) return;
                 if (!provId) {
                     selectDistrict.innerHTML = '<option value="">-- Chọn Quận/Huyện --</option>';
                     return;
@@ -216,16 +179,19 @@
                     const res = await fetch(`/api/geo/districts?provinceId=${provId}`);
                     const districts = await res.json();
                     selectDistrict.innerHTML = '<option value="">-- Chọn Quận/Huyện --</option>';
-                    districts.forEach(d => {
-                        const sel = (d.id == selectedDistId) ? 'selected' : '';
-                        selectDistrict.innerHTML += `<option value="${d.id}" ${sel}>${d.name}</option>`;
-                    });
+                    if (Array.isArray(districts)) {
+                        districts.forEach(d => {
+                            const sel = (d.id == selectedDistId) ? 'selected' : '';
+                            selectDistrict.innerHTML += `<option value="${d.id}" ${sel}>${d.name}</option>`;
+                        });
+                    }
                 } catch (err) {
                     selectDistrict.innerHTML = '<option value="">-- Lỗi tải dữ liệu --</option>';
                 }
             }
 
             async function loadWards(distId, selectedWardId) {
+                if (!selectWard) return;
                 if (!distId) {
                     selectWard.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
                     return;
@@ -234,76 +200,138 @@
                     const res = await fetch(`/api/geo/wards?districtId=${distId}`);
                     const wards = await res.json();
                     selectWard.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
-                    wards.forEach(w => {
-                        const sel = (w.id == selectedWardId) ? 'selected' : '';
-                        selectWard.innerHTML += `<option value="${w.id}" ${sel}>${w.name}</option>`;
-                    });
+                    if (Array.isArray(wards)) {
+                        wards.forEach(w => {
+                            const sel = (w.id == selectedWardId) ? 'selected' : '';
+                            selectWard.innerHTML += `<option value="${w.id}" ${sel}>${w.name}</option>`;
+                        });
+                    }
                 } catch (err) {
                     selectWard.innerHTML = '<option value="">-- Lỗi tải dữ liệu --</option>';
                 }
             }
 
-            // Nạp ban đầu
-            if (selectProvince.value) {
+            // Nạp quận/huyện và phường/xã đã lưu ban đầu
+            if (selectProvince && selectProvince.value) {
                 await loadDistricts(selectProvince.value, initialDistrictId);
                 if (initialDistrictId) {
                     await loadWards(initialDistrictId, initialWardId);
                 }
             }
 
-            // Sự kiện thay đổi
-            selectProvince.addEventListener('change', async function () {
-                selectWard.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
-                await loadDistricts(this.value, null);
-            });
+            if (selectProvince) {
+                selectProvince.addEventListener('change', async function () {
+                    if (selectWard) selectWard.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+                    await loadDistricts(this.value, null);
+                });
+            }
 
-            selectDistrict.addEventListener('change', async function () {
-                await loadWards(this.value, null);
-            });
+            if (selectDistrict) {
+                selectDistrict.addEventListener('change', async function () {
+                    await loadWards(this.value, null);
+                });
+            }
 
-            // ── Tìm tọa độ từ địa chỉ (Gọi API Geocode proxy Nominatim) ──
-            btnGeocode.addEventListener('click', async function () {
-                const addressVal = inputAddress.value.trim();
-                const provText = selectProvince.options[selectProvince.selectedIndex]?.text || '';
-                const distText = selectDistrict.options[selectDistrict.selectedIndex]?.text || '';
+            // ── 2. KHỞI TẠO BẢN ĐỒ LEAFLET AN TOÀN ───────────────────────────
+            let map = null;
+            let marker = null;
 
-                const fullQuery = [addressVal, distText, provText]
-                    .filter(s => s && !s.startsWith('--'))
-                    .join(', ');
-
-                if (!fullQuery) {
-                    geocodeStatus.innerHTML = '<span class="text-danger">Vui lòng nhập địa chỉ trước khi tìm.</span>';
-                    return;
+            function updateInputs(lat, lng) {
+                if (inputLat && inputLng) {
+                    inputLat.value = Number(lat).toFixed(6);
+                    inputLng.value = Number(lng).toFixed(6);
                 }
+            }
 
-                geocodeStatus.innerHTML = '<span class="text-primary"><i class="bi bi-hourglass-split me-1"></i>Đang tìm vị trí trên bản đồ...</span>';
+            try {
+                if (typeof L !== 'undefined' && document.getElementById('workplaceMap')) {
+                    const initialLat = parseFloat(inputLat.value) || 21.0285;
+                    const initialLng = parseFloat(inputLng.value) || 105.8542;
 
-                try {
-                    const response = await fetch(`/api/geo/geocode?q=${encodeURIComponent(fullQuery)}`);
-                    if (response.status === 401 || response.status === 302) {
-                        geocodeStatus.innerHTML = '<span class="text-danger">Vui lòng đăng nhập để sử dụng tính năng này.</span>';
+                    const localIcon = L.icon({
+                        iconUrl: '/lib/leaflet/images/marker-icon.png',
+                        iconRetinaUrl: '/lib/leaflet/images/marker-icon-2x.png',
+                        shadowUrl: '/lib/leaflet/images/marker-shadow.png',
+                        iconSize: [25, 41],
+                        iconAnchor: [12, 41],
+                        popupAnchor: [1, -34],
+                        shadowSize: [41, 41]
+                    });
+
+                    map = L.map('workplaceMap').setView([initialLat, initialLng], 15);
+
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                        maxZoom: 19,
+                        subdomains: 'abcd',
+                        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+                    }).addTo(map);
+
+                    marker = L.marker([initialLat, initialLng], { draggable: true, icon: localIcon }).addTo(map);
+
+                    marker.on('dragend', function (e) {
+                        const pos = e.target.getLatLng();
+                        updateInputs(pos.lat, pos.lng);
+                    });
+
+                    map.on('click', function (e) {
+                        marker.setLatLng(e.latlng);
+                        updateInputs(e.latlng.lat, e.latlng.lng);
+                    });
+
+                    setTimeout(function () {
+                        map.invalidateSize();
+                    }, 250);
+                }
+            } catch (mapErr) {
+                console.error('Lỗi khởi tạo bản đồ:', mapErr);
+            }
+
+            // ── 3. TÌM TỌA ĐỘ TỪ ĐỊA CHỈ (Geocoding) ────────────────────────
+            if (btnGeocode && geocodeStatus) {
+                btnGeocode.addEventListener('click', async function () {
+                    const addressVal = inputAddress ? inputAddress.value.trim() : '';
+                    const provText = (selectProvince && selectProvince.selectedIndex >= 0) ? selectProvince.options[selectProvince.selectedIndex].text : '';
+                    const distText = (selectDistrict && selectDistrict.selectedIndex >= 0) ? selectDistrict.options[selectDistrict.selectedIndex].text : '';
+
+                    const fullQuery = [addressVal, distText, provText]
+                        .filter(s => s && !s.startsWith('--'))
+                        .join(', ');
+
+                    if (!fullQuery) {
+                        geocodeStatus.innerHTML = '<span class="text-danger">Vui lòng nhập địa chỉ trước khi tìm.</span>';
                         return;
                     }
-                    if (response.status === 429) {
-                        geocodeStatus.innerHTML = '<span class="text-danger">Bạn đã tìm kiếm quá nhanh. Vui lòng thử lại sau vài giây.</span>';
-                        return;
-                    }
 
-                    const data = await response.json();
-                    if (Array.isArray(data) && data.length > 0) {
-                        const first = data[0];
-                        marker.setLatLng([first.latitude, first.longitude]);
-                        map.setView([first.latitude, first.longitude], 16);
-                        updateInputs(first.latitude, first.longitude);
-                        geocodeStatus.innerHTML = `<span class="text-success"><i class="bi bi-check-circle me-1"></i>Đã tìm thấy: ${first.displayName.substring(0, 80)}...</span>`;
-                    } else {
-                        geocodeStatus.innerHTML = '<span class="text-warning-emphasis">Không tìm thấy tọa độ khớp. Vui lòng bấm trực tiếp trên bản đồ để ghim vị trí.</span>';
+                    geocodeStatus.innerHTML = '<span class="text-primary"><i class="bi bi-hourglass-split me-1"></i>Đang tìm vị trí trên bản đồ...</span>';
+
+                    try {
+                        const response = await fetch(`/api/geo/geocode?q=${encodeURIComponent(fullQuery)}`);
+                        if (response.status === 401 || response.status === 302) {
+                            geocodeStatus.innerHTML = '<span class="text-danger">Vui lòng đăng nhập để sử dụng tính năng này.</span>';
+                            return;
+                        }
+                        if (response.status === 429) {
+                            geocodeStatus.innerHTML = '<span class="text-danger">Bạn đã tìm kiếm quá nhanh. Vui lòng thử lại sau vài giây.</span>';
+                            return;
+                        }
+
+                        const data = await response.json();
+                        if (Array.isArray(data) && data.length > 0) {
+                            const first = data[0];
+                            if (map && marker) {
+                                marker.setLatLng([first.latitude, first.longitude]);
+                                map.setView([first.latitude, first.longitude], 16);
+                            }
+                            updateInputs(first.latitude, first.longitude);
+                            geocodeStatus.innerHTML = `<span class="text-success"><i class="bi bi-check-circle me-1"></i>Đã tìm thấy: ${first.displayName.substring(0, 80)}...</span>`;
+                        } else {
+                            geocodeStatus.innerHTML = '<span class="text-warning-emphasis">Không tìm thấy tọa độ khớp. Vui lòng bấm trực tiếp trên bản đồ để ghim vị trí.</span>';
+                        }
+                    } catch (err) {
+                        geocodeStatus.innerHTML = '<span class="text-danger">Không thể kết nối đến máy chủ bản đồ.</span>';
                     }
-                } catch (err) {
-                    geocodeStatus.innerHTML = '<span class="text-danger">Không thể kết nối đến máy chủ bản đồ.</span>';
-                }
-            });
+                });
+            }
         });
     </script>
 }
-
