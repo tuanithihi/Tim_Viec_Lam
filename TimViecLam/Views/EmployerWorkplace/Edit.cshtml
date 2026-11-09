@@ -232,7 +232,7 @@
                 });
             }
 
-            // ── 2. KHỞI TẠO BẢN ĐỒ LEAFLET AN TOÀN ───────────────────────────
+            // ── 2. KHỞI TẠO BẢN ĐỒ LEAFLET AN TOÀN & TỰ ĐỘNG THỬ LẠI NẾU CẦN ──
             let map = null;
             let marker = null;
 
@@ -243,10 +243,20 @@
                 }
             }
 
-            try {
-                if (typeof L !== 'undefined' && document.getElementById('workplaceMap')) {
+            function initWorkplaceMap() {
+                if (typeof L === 'undefined') {
+                    // Nếu leaflet.js đang nạp bất đồng bộ, thử lại sau 100ms
+                    setTimeout(initWorkplaceMap, 100);
+                    return;
+                }
+                const mapEl = document.getElementById('workplaceMap');
+                if (!mapEl || map) return;
+
+                try {
                     const initialLat = parseFloat(inputLat.value) || 21.0285;
                     const initialLng = parseFloat(inputLng.value) || 105.8542;
+
+                    updateInputs(initialLat, initialLng);
 
                     const localIcon = L.icon({
                         iconUrl: '/lib/leaflet/images/marker-icon.png',
@@ -260,7 +270,7 @@
 
                     map = L.map('workplaceMap').setView([initialLat, initialLng], 15);
 
-                    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
                         maxZoom: 19,
                         subdomains: 'abcd',
                         attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
@@ -281,10 +291,12 @@
                     setTimeout(function () {
                         map.invalidateSize();
                     }, 250);
+                } catch (mapErr) {
+                    console.error('Lỗi khởi tạo bản đồ:', mapErr);
                 }
-            } catch (mapErr) {
-                console.error('Lỗi khởi tạo bản đồ:', mapErr);
             }
+
+            initWorkplaceMap();
 
             // ── 3. TÌM TỌA ĐỘ TỪ ĐỊA CHỈ (Geocoding) ────────────────────────
             if (btnGeocode && geocodeStatus) {

@@ -216,7 +216,7 @@
                 });
             }
 
-            // ── 2. KHỞI TẠO BẢN ĐỒ LEAFLET AN TOÀN ───────────────────────────
+            // ── 2. KHỞI TẠO BẢN ĐỒ LEAFLET AN TOÀN & TỰ ĐỘNG THỬ LẠI NẾU CẦN ──
             let map = null;
             let marker = null;
 
@@ -227,13 +227,22 @@
                 }
             }
 
-            try {
-                if (typeof L !== 'undefined' && document.getElementById('workplaceMap')) {
+            function initWorkplaceMap() {
+                if (typeof L === 'undefined') {
+                    // Nếu leaflet.js đang nạp bất đồng bộ, thử lại sau 100ms
+                    setTimeout(initWorkplaceMap, 100);
+                    return;
+                }
+                const mapEl = document.getElementById('workplaceMap');
+                if (!mapEl || map) return;
+
+                try {
                     const initialLat = parseFloat(inputLat.value) || 21.0285;
                     const initialLng = parseFloat(inputLng.value) || 105.8542;
-                    const hasInitialCoords = !isNaN(parseFloat(inputLat.value)) && !isNaN(parseFloat(inputLng.value));
 
-                    // Tạo icon cục bộ từ wwwroot/lib/leaflet/images
+                    // Luôn đồng bộ tọa độ vào input để người dùng thấy ngay
+                    updateInputs(initialLat, initialLng);
+
                     const localIcon = L.icon({
                         iconUrl: '/lib/leaflet/images/marker-icon.png',
                         iconRetinaUrl: '/lib/leaflet/images/marker-icon-2x.png',
@@ -244,20 +253,15 @@
                         shadowSize: [41, 41]
                     });
 
-                    map = L.map('workplaceMap').setView([initialLat, initialLng], hasInitialCoords ? 15 : 12);
+                    map = L.map('workplaceMap').setView([initialLat, initialLng], 14);
 
-                    // Sử dụng server tile CartoDB Voyager tốc độ cao, hỗ trợ CORS đầy đủ
-                    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
                         maxZoom: 19,
                         subdomains: 'abcd',
                         attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
                     }).addTo(map);
 
                     marker = L.marker([initialLat, initialLng], { draggable: true, icon: localIcon }).addTo(map);
-
-                    if (hasInitialCoords) {
-                        updateInputs(initialLat, initialLng);
-                    }
 
                     marker.on('dragend', function (e) {
                         const pos = e.target.getLatLng();
@@ -269,14 +273,15 @@
                         updateInputs(e.latlng.lat, e.latlng.lng);
                     });
 
-                    // Đảm bảo map tính toán lại kích thước hiển thị chính xác
                     setTimeout(function () {
                         map.invalidateSize();
                     }, 250);
+                } catch (mapErr) {
+                    console.error('Lỗi khởi tạo bản đồ:', mapErr);
                 }
-            } catch (mapErr) {
-                console.error('Lỗi khởi tạo bản đồ:', mapErr);
             }
+
+            initWorkplaceMap();
 
             // ── 3. TÌM TỌA ĐỘ TỪ ĐỊA CHỈ (Geocoding API) ────────────────────
             if (btnGeocode && geocodeStatus) {
