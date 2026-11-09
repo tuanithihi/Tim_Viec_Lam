@@ -221,26 +221,65 @@
 
             if (selectProvince) {
                 selectProvince.addEventListener('change', async function () {
+                    const provText = (this.selectedIndex >= 0) ? this.options[this.selectedIndex].text : '';
                     if (selectWard) selectWard.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+                    if (provText && !provText.startsWith('--')) {
+                        flyToAddress(provText, 12);
+                    }
                     await loadDistricts(this.value, null);
                 });
             }
 
             if (selectDistrict) {
                 selectDistrict.addEventListener('change', async function () {
+                    const provText = (selectProvince && selectProvince.selectedIndex >= 0) ? selectProvince.options[selectProvince.selectedIndex].text : '';
+                    const distText = (this.selectedIndex >= 0) ? this.options[this.selectedIndex].text : '';
+                    if (distText && !distText.startsWith('--')) {
+                        flyToAddress(`${distText}, ${provText}`, 14);
+                    }
                     await loadWards(this.value, null);
                 });
             }
 
-            // ── 2. KHỞI TẠO BẢN ĐỒ LEAFLET AN TOÀN & TỰ ĐỘNG THỬ LẠI NẾU CẦN ──
+            // ── 2. KHỞI TẠO BẢN ĐỒ LEAFLET AN TOÀN & GIỚI HẠN LÃNH THỔ VN ──────
             let map = null;
             let marker = null;
 
+            function clampCoords(lat, lng) {
+                // Giới hạn tuyệt đối trong lãnh thổ Việt Nam (Lat 8.0 - 24.0, Lng 102.0 - 110.0)
+                let cLat = Math.max(8.0, Math.min(24.0, Number(lat) || 21.0285));
+                let cLng = Math.max(102.0, Math.min(110.0, Number(lng) || 105.8542));
+                return { lat: cLat, lng: cLng };
+            }
+
             function updateInputs(lat, lng) {
+                const c = clampCoords(lat, lng);
                 if (inputLat && inputLng) {
-                    inputLat.value = Number(lat).toFixed(6);
-                    inputLng.value = Number(lng).toFixed(6);
+                    inputLat.value = c.lat.toFixed(6);
+                    inputLng.value = c.lng.toFixed(6);
                 }
+            }
+
+            async function flyToAddress(query, zoomLevel = 13) {
+                if (!query) return;
+                try {
+                    const res = await fetch(`/api/geo/geocode?q=${encodeURIComponent(query)}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (Array.isArray(data) && data.length > 0) {
+                            const first = data[0];
+                            const c = clampCoords(first.latitude, first.longitude);
+                            if (map && marker) {
+                                marker.setLatLng([c.lat, c.lng]);
+                                map.flyTo([c.lat, c.lng], zoomLevel);
+                            }
+                            updateInputs(c.lat, c.lng);
+                            if (geocodeStatus) {
+                                geocodeStatus.innerHTML = `<span class="text-success"><i class="bi bi-geo-alt me-1"></i>Đã định vị: ${first.displayName.substring(0, 70)}...</span>`;
+                            }
+                        }
+                    }
+                } catch { }
             }
 
             function initWorkplaceMap() {
@@ -253,10 +292,11 @@
                 if (!mapEl || map) return;
 
                 try {
-                    const initialLat = parseFloat(inputLat.value) || 21.0285;
-                    const initialLng = parseFloat(inputLng.value) || 105.8542;
+                    const rawLat = parseFloat(inputLat.value) || 21.0285;
+                    const rawLng = parseFloat(inputLng.value) || 105.8542;
+                    const c = clampCoords(rawLat, rawLng);
 
-                    updateInputs(initialLat, initialLng);
+                    updateInputs(c.lat, c.lng);
 
                     const localIcon = L.icon({
                         iconUrl: '/lib/leaflet/images/marker-icon.png',
@@ -268,7 +308,15 @@
                         shadowSize: [41, 41]
                     });
 
-                    map = L.map('workplaceMap').setView([initialLat, initialLng], 15);
+                    // Khóa phạm vi di chuyển trong lãnh thổ Việt Nam
+                    const vnBounds = L.latLngBounds(L.latLng(8.0, 102.0), L.latLng(24.0, 110.0));
+
+                    map = L.map('workplaceMap', {
+                        maxBounds: vnBounds,
+                        maxBoundsViscosity: 1.0,
+                        minZoom: 5,
+                        maxZoom: 19
+                    }).setView([c.lat, c.lng], 15);
 
                     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
                         maxZoom: 19,
@@ -276,16 +324,19 @@
                         attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
                     }).addTo(map);
 
-                    marker = L.marker([initialLat, initialLng], { draggable: true, icon: localIcon }).addTo(map);
+                    marker = L.marker([c.lat, c.lng], { draggable: true, icon: localIcon }).addTo(map);
 
                     marker.on('dragend', function (e) {
                         const pos = e.target.getLatLng();
-                        updateInputs(pos.lat, pos.lng);
+                        const clamped = clampCoords(pos.lat, pos.lng);
+                        marker.setLatLng([clamped.lat, clamped.lng]);
+                        updateInputs(clamped.lat, clamped.lng);
                     });
 
                     map.on('click', function (e) {
-                        marker.setLatLng(e.latlng);
-                        updateInputs(e.latlng.lat, e.latlng.lng);
+                        const clamped = clampCoords(e.latlng.lat, e.latlng.lng);
+                        marker.setLatLng([clamped.lat, clamped.lng]);
+                        updateInputs(clamped.lat, clamped.lng);
                     });
 
                     setTimeout(function () {

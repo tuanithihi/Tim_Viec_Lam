@@ -203,13 +203,13 @@ app.Use(async (context, next) =>
     context.Response.Headers.Append("Permissions-Policy",
         "camera=(), microphone=(), geolocation=(self), payment=()");
 
-    // Content-Security-Policy: cho phép self + Bootstrap CDN + OSM tiles + Leaflet (unpkg)
+    // Content-Security-Policy: cho phép self + Bootstrap CDN + OSM/Carto/Esri map tiles + Leaflet
     context.Response.Headers.Append("Content-Security-Policy",
         "default-src 'self'; " +
         "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; " +
         "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; " +
         "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; " +
-        "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://cdn.jsdelivr.net; " +
+        "img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tile.openstreetmap.de https://*.tile.openstreetmap.de https://*.tile.openstreetmap.fr https://*.basemaps.cartocdn.com https://server.arcgisonline.com https://cdn.jsdelivr.net; " +
         "connect-src 'self'; " +
         "frame-ancestors 'self'; " +
         "form-action 'self';");
