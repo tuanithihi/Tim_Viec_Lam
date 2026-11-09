@@ -155,11 +155,45 @@ public class EmployerController : Controller
     }
 
     /// <summary>
-    /// Chuyển hướng đến trang đăng tin tuyển dụng chính thức.
-    /// GET /nha-tuyen-dung/dang-tin
+    /// Điều hướng nút Đăng tuyển (/dang-tin và /nha-tuyen-dung/dang-tin).
+    /// Tự động xử lý trạng thái đăng nhập, phân quyền ứng viên và trạng thái phê duyệt công ty.
+    /// </summary>
+    [AllowAnonymous]
+    [HttpGet("/dang-tin")]
+    [HttpGet("dang-tin")]
+    public async Task<IActionResult> PostJob()
+    {
+        if (!User.Identity?.IsAuthenticated ?? true)
+        {
+            return Redirect("/dang-nhap?ReturnUrl=" + Uri.EscapeDataString("/dang-tin"));
+        }
+
+        if (User.IsInRole("Candidate"))
+        {
+            TempData["ErrorMessage"] = "Bạn đang đăng nhập bằng tài khoản Ứng viên. Vui lòng đăng ký hoặc sử dụng tài khoản Nhà tuyển dụng để đăng tin.";
+            return RedirectToAction("RegisterEmployer", "Account");
+        }
+
+        int? companyId = _currentUser.CompanyId;
+        if (!companyId.HasValue)
+        {
+            return RedirectToAction("Status");
+        }
+
+        var company = await _companyService.GetCompanyByIdAsync(companyId.Value);
+        if (company == null || company.Status != "Approved")
+        {
+            return RedirectToAction("Status");
+        }
+
+        return RedirectToAction("Create", "EmployerJob");
+    }
+
+    /// <summary>
+    /// Chuyển hướng tương thích ngược.
     /// </summary>
     [Authorize(Policy = "ApprovedEmployer")]
-    [HttpGet("dang-tin")]
+    [HttpGet("create-job-alias")]
     public IActionResult CreateJob()
     {
         return RedirectToAction("Create", "EmployerJob");
