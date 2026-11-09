@@ -149,6 +149,7 @@ public class DataContext : DbContext
         modelBuilder.Entity<tblJobType>(entity =>
         {
             entity.HasIndex(t => t.Code).IsUnique();
+            entity.HasIndex(t => t.Slug).IsUnique();
         });
 
         // ── tblSkill ────────────────────────────────────────────────────────────
@@ -177,6 +178,7 @@ public class DataContext : DbContext
         modelBuilder.Entity<tblBenefit>(entity =>
         {
             entity.HasIndex(b => b.Name);
+            entity.HasIndex(b => b.Slug).IsUnique();
         });
 
         // ── tblJobBenefit (Khóa chính kép) ──────────────────────────────────────

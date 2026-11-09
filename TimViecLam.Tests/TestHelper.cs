@@ -13,19 +13,21 @@ namespace TimViecLam.Tests;
 /// </summary>
 public class TestWebApplicationFactory : WebApplicationFactory<Program>
 {
+    private readonly string _dbName = "TimViecLamTest_" + Guid.NewGuid().ToString("N");
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Test");
 
         builder.ConfigureServices(services =>
         {
-            // Thay thế DataContext bằng InMemory
+            // Thay thế DataContext bằng InMemory với tên cố định cho phiên chạy test này
             var descriptor = services.SingleOrDefault(
                 d => d.ServiceType == typeof(DbContextOptions<DataContext>));
             if (descriptor != null) services.Remove(descriptor);
 
             services.AddDbContext<DataContext>(options =>
-                options.UseInMemoryDatabase("TimViecLamTest_" + Guid.NewGuid()));
+                options.UseInMemoryDatabase(_dbName));
         });
     }
 }

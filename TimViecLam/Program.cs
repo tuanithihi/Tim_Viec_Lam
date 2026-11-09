@@ -117,6 +117,8 @@ builder.Services.AddHealthChecks();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IEmailSender, LoggingEmailSender>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IGeoService, GeoService>();
 // builder.Services.AddScoped<IJobService, JobService>();
 // builder.Services.AddScoped<IEmployerService, EmployerService>();
 
@@ -288,6 +290,8 @@ app.MapControllerRoute(
 app.MapControllerRoute(
     name:    "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.MapControllers();
 
 app.Run();
 

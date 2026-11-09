@@ -126,3 +126,34 @@
 - **Rủi ro / việc để giai đoạn sau**:
   - Quản lý danh mục kỹ năng, ngành nghề, địa giới hành chính sẽ được triển khai giao diện và chức năng ở Sprint 2.
   - Chức năng duyệt/từ chối công ty nhà tuyển dụng của SuperAdmin sẽ hoàn thiện ở Sprint 3A.
+
+## SPRINT 2 — Quản lý danh mục (Chức năng 3)
+- **Thời gian hoàn thành**: 2026-11-09 13:26:00
+- **Trạng thái**: PASS
+- **Lệnh đã chạy**:
+  1. `dotnet ef migrations add AddCategorySlugs`: Tạo migration bổ sung cột `Slug` và unique index cho `tblJobType` và `tblBenefit` (có script UPDATE dữ liệu cũ trước khi tạo index).
+  2. `dotnet ef database update`: Áp dụng migration thành công lên CSDL SQL Server `.\SQLEXPRESS`.
+  3. `dotnet build TimViecLam.sln`: Build succeeded (0 Warning(s), 0 Error(s)).
+  4. `dotnet test --filter "FullyQualifiedName~Sprint2"`: Passed: 39, Failed: 0, Skipped: 0, Total: 39, Duration: 1 s.
+  5. Smoke test HTTP trên ứng dụng chạy thực tế:
+     - `GET /api/geo/provinces` -> 200 OK | Cache-Control: public, max-age=3600
+     - `GET /api/geo/districts?provinceId=1` -> 200 OK | Cache-Control: public, max-age=3600
+     - `GET /api/geo/districts` (thiếu tham số) -> 400 BadRequest
+     - `GET /Admin/Category` (khách chưa đăng nhập) -> 302 Redirect (về /dang-nhap?ReturnUrl=/Admin/Category)
+     - `GET /Admin/Location` (khách chưa đăng nhập) -> 302 Redirect (về /dang-nhap?ReturnUrl=/Admin/Location)
+- **Danh sách mã AC đã phủ**:
+  - `AC-S2.1`: Quét reflection và integration test xác nhận toàn bộ Controllers danh mục (`CategoryController`, `JobTypeController`, `SkillController`, `BenefitController`, `LocationController`) được bảo vệ bởi `[Area("Admin")]` và `[Authorize(Policy = "SuperAdminOnly")]`; Khách bị chuyển hướng 302 tới đăng nhập, Candidate/Employer nhận 403 Forbidden, SuperAdmin truy cập thành công 200 OK.
+  - `AC-S2.2`: Index phân trang và tìm kiếm chính xác (tìm theo tên, từ khóa không dấu); Tối ưu truy vấn DB (đếm và lấy trang với <= 2 truy vấn cho danh sách).
+  - `AC-S2.3`: Create validate tên bắt buộc và chống trùng lặp không phân biệt hoa thường và dấu tiếng Việt (thông qua `SearchTextBuilder`); Slug sinh tự động bằng `SlugHelper`, trường hợp trùng slug với tên khác được tự động thêm hậu tố `-1`, `-2`.
+  - `AC-S2.4`: Edit cập nhật thông tin và cập nhật Slug tương ứng; chuyển đổi trạng thái `IsActive` (bật/tắt) hoạt động chính xác.
+  - `AC-S2.5`: Delete danh mục đang được sử dụng bởi `tblJob`, `tblJobSkill`, `tblJobBenefit` bị chặn kèm thông báo tiếng Việt đề nghị chuyển sang tắt; danh mục chưa sử dụng được xóa an toàn khỏi DB.
+  - `AC-S2.6`: Danh mục sau khi bị tắt (`IsActive = false`) không còn xuất hiện trong danh sách dữ liệu dùng cho bộ lọc công khai và API.
+  - `AC-S2.7`: `IMemoryCache` tự động được xóa/làm mới sau các thao tác Create/Edit/Delete, đảm bảo dữ liệu mới nhất được phản ánh tức thì.
+  - `AC-S2.8`: API Geo: `GET /api/geo/provinces` trả về đủ 63 tỉnh/thành phố và header `Cache-Control: public, max-age=3600`; `GET /api/geo/districts` và `GET /api/geo/wards` lọc đúng theo cha; tham số thiếu/sai trả về 400 Bad Request; id hợp lệ nhưng không có con trả về mảng rỗng `[]`.
+  - `AC-S2.9`: DataSeeder chạy nhiều lần (idempotent) số lượng bản ghi không đổi; toàn bộ danh mục, loại công việc, kỹ năng, phúc lợi, tỉnh/quận/phường đều có `Slug` hợp lệ và duy nhất trong phạm vi cha.
+  - `AC-S2.10`: Mọi thao tác POST dữ liệu không kèm antiforgery token bị từ chối với 400 Bad Request (`[ValidateAntiForgeryToken]`).
+- **Giả định đã chọn**:
+  - Tích hợp kiểm tra trùng tên danh mục không phân biệt hoa thường và dấu bằng `SearchTextBuilder.Build()`.
+  - Geo API cấu hình cache 1 giờ (`Cache-Control: public, max-age=3600`) và `IMemoryCache` ở server để tối ưu hiệu năng cho dữ liệu địa giới ít thay đổi.
+- **Rủi ro / việc để giai đoạn sau**:
+  - Giao diện đăng tin việc làm của Employer ở Sprint 4A sẽ sử dụng Geo API (`/api/geo/provinces`, `/districts`, `/wards`) và các danh mục từ Sprint 2 để render cascading dropdown và bộ chọn kỹ năng/phúc lợi.

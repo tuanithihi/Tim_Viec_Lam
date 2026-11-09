@@ -249,7 +249,8 @@ public static class DataSeeder
             ("Freelance", "Freelance", "Làm việc tự do theo gói công việc / bàn giao sản phẩm", 5)
         };
 
-        var existingCodes = await context.JobTypes.Select(t => t.Code).ToListAsync();
+        var existingJobTypes = await context.JobTypes.ToListAsync();
+        var existingCodes = existingJobTypes.Select(t => t.Code).ToHashSet();
 
         foreach (var item in jobTypes)
         {
@@ -259,10 +260,20 @@ public static class DataSeeder
                 {
                     Name = item.Name,
                     Code = item.Code,
+                    Slug = SlugHelper.Slugify(item.Name),
                     Description = item.Desc,
                     SortOrder = item.Order,
                     IsActive = true
                 });
+            }
+        }
+
+        // Cập nhật Slug cho các bản ghi cũ nếu chưa có
+        foreach (var jt in existingJobTypes)
+        {
+            if (string.IsNullOrEmpty(jt.Slug))
+            {
+                jt.Slug = SlugHelper.Slugify(jt.Name);
             }
         }
 
@@ -359,7 +370,8 @@ public static class DataSeeder
             ("Đánh giá tăng lương 2 lần/năm", "bi-graph-up", "Kỳ xem xét đánh giá hiệu suất và điều chỉnh lương 6 tháng một lần")
         };
 
-        var existingNames = await context.Benefits.Select(b => b.Name).ToListAsync();
+        var existingBenefits = await context.Benefits.ToListAsync();
+        var existingNames = existingBenefits.Select(b => b.Name).ToHashSet();
 
         foreach (var item in benefits)
         {
@@ -368,10 +380,20 @@ public static class DataSeeder
                 context.Benefits.Add(new tblBenefit
                 {
                     Name = item.Name,
+                    Slug = SlugHelper.Slugify(item.Name),
                     Icon = item.Icon,
                     Description = item.Desc,
                     IsActive = true
                 });
+            }
+        }
+
+        // Cập nhật Slug cho các bản ghi cũ nếu chưa có
+        foreach (var b in existingBenefits)
+        {
+            if (string.IsNullOrEmpty(b.Slug))
+            {
+                b.Slug = SlugHelper.Slugify(b.Name);
             }
         }
 

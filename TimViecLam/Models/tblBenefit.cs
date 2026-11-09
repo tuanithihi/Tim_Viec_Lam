@@ -17,6 +17,11 @@ public class tblBenefit
     [Display(Name = "Tên phúc lợi")]
     public string Name { get; set; } = string.Empty;
 
+    [Required(ErrorMessage = "Slug không được để trống.")]
+    [StringLength(160)]
+    [Display(Name = "Đường dẫn (Slug)")]
+    public string Slug { get; set; } = string.Empty;
+
     [StringLength(100)]
     [Display(Name = "Biểu tượng (Icon CSS)")]
     public string? Icon { get; set; }

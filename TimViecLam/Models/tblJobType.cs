@@ -22,6 +22,11 @@ public class tblJobType
     [Display(Name = "Mã hình thức")]
     public string Code { get; set; } = string.Empty;
 
+    [Required(ErrorMessage = "Slug không được để trống.")]
+    [StringLength(120)]
+    [Display(Name = "Đường dẫn (Slug)")]
+    public string Slug { get; set; } = string.Empty;
+
     [StringLength(500)]
     [Display(Name = "Mô tả")]
     public string? Description { get; set; }
