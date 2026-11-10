@@ -19,6 +19,7 @@ TestResults/
 coverage*/
 *.trx
 *.coveragexml
+TimViecLam.Tests/
 
 # ── Bí mật (User Secrets) ────────────────────────────────────────
 # KHÔNG commit secrets.json hay file chứa password thật
